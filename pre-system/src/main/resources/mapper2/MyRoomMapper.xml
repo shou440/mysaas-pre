@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xd.pre.modules.myeletric.mapper.MyRoomMapper">
+    <resultMap id="getRoomInfoResult" type="com.xd.pre.modules.myeletric.domain.MyRoom">
+        <result column="room_id" property="room_id" jdbcType="INTEGER"></result>
+        <result column="room_inside_id" property="room_inside_id" jdbcType="VARCHAR"></result>
+        <result column="room_name" property="room_name" jdbcType="VARCHAR"></result>
+        <result column="tenant_name" property="tenant_name" jdbcType="VARCHAR"></result>
+        <result column="tenant_tel" property="tenant_tel" jdbcType="VARCHAR"></result>
+        <result column="ma_cost" property="ma_cost" jdbcType="DECIMAL"></result>
+        <result column="re_cost" property="re_cost" jdbcType="DECIMAL"></result>
+        <result column="ot_cost" property="ot_cost" jdbcType="DECIMAL"></result>
+    </resultMap>
+<select id="getRoomInfo" resultMap="getRoomInfoResult">
+select * from rm_ttt
+</select>
+
+</mapper>
