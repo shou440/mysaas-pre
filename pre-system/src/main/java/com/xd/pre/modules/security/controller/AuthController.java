@@ -65,7 +65,7 @@ public class AuthController {
      */
     @PostMapping("/sendCode/{phone}")
     public R sendSmsCode(@PathVariable("phone") String phone) {
-        SmsResponse smsResponse = AliYunSmsUtils.sendSms(phone, "prex", "登录");
+        SmsResponse smsResponse = AliYunSmsUtils.sendSms(phone, "Mb快充", "登录");
 
         if (ObjectUtil.isNull(smsResponse)) {
             return R.error("短信发送失败");

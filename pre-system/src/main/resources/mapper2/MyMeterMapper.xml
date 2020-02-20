@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xd.pre.modules.myeletric.mapper.MyMeterMapper">
+    <resultMap id="getRoomMeterList" type="com.xd.pre.modules.myeletric.domain.MyMeter">
+        <result column="meter_id" property="meter_id" jdbcType="INTEGER"></result>
+        <result column="room_id" property="room_id" jdbcType="INTEGER"></result>
+        <result column="meter_type" property="meter_type" jdbcType="VARCHAR"></result>
+        <result column="meter_ct" property="meter_ct" jdbcType="FLOAT"></result>
+        <result column="meter_pt" property="meter_pt" jdbcType="FLOAT"></result>
+        <result column="meter_status" property="meter_status" jdbcType="INTEGER"></result>
+    </resultMap>
+    <select id="getMeterList" resultMap="getRoomMeterList">
+        select * from my_meter where room_id=#{roomid}
+    </select>
+    <select id="getMeter" resultMap="getRoomMeterList">
+        select * from my_meter where meter_id=#{meterid}
+    </select>
+    <update id="bindMeter" parameterType="com.xd.pre.modules.myeletric.dto.MyMeterFilter">
+        update my_meter
+        <set>
+            room_id = #{filter.room_id},
+            meter_upt_date = now(),
+        </set>
+        where meter_id = #{filter.meter_id}
+    </update>
+    <update id="unBindMeter" parameterType="INTEGER">
+        update my_meter
+        <set>
+            room_id = 0,
+            meter_upt_date = now(),
+        </set>
+        where meter_id = #{meterid}
+    </update>
+</mapper>

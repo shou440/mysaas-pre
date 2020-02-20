@@ -80,7 +80,9 @@ public class PreWebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity httpSecurity) throws Exception {
 
+        //添加登录图形验证码错误处理
         imageCodeFilter.setAuthenticationFailureHandler(preAuthenticationFailureHandler);
+
         httpSecurity
                 // 由于使用的是JWT，我们这里不需要csrf
                 .csrf().disable()
@@ -100,6 +102,8 @@ public class PreWebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/tenant/list").anonymous()
                 .antMatchers("/tenant/setting/**").anonymous()
                 .antMatchers("/define/deploy/**").anonymous()
+                .antMatchers("/weixin/**").anonymous()
+                .antMatchers("/pre/weixin/**").anonymous()
                 .antMatchers("/file/**")
                 .permitAll()
                 // 访问/user 需要拥有admin权限
@@ -125,6 +129,7 @@ public class PreWebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .addFilterBefore(preJwtAuthenticationTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 // 添加短信验证码过滤器
                 .addFilterBefore(smsCodeFilter, UsernamePasswordAuthenticationFilter.class);
+                //如果要添加微信认证过滤器，则在此添加登录前预处理
     }
 
     @Override

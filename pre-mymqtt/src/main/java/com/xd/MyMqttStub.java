@@ -53,9 +53,7 @@ public class MyMqttStub {
             opts.setAutomaticReconnect(true);
             opts.setCleanSession(true);
 
-
             client = factory.getAsyncClientInstance("tcp://211.149.169.214:5009","test111");
-
 
             //设置回调函数
             mqttCK = new MyPushCallback();
@@ -71,8 +69,12 @@ public class MyMqttStub {
         }
 
     }
-
+    /**
+     * 数据发布
+     *
+     */
     public void publish(int qos,boolean retained,String topic,String sData){
+
         MqttMessage message = new MqttMessage();
         message.setQos(qos);
         message.setRetained(retained);

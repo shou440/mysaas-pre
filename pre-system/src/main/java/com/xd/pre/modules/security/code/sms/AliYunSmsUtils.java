@@ -23,8 +23,8 @@ import org.apache.commons.lang3.RandomStringUtils;
 @Slf4j
 public class AliYunSmsUtils {
 
-    private static final String ACCESS_KEY_ID = "LTAI6RRoUOP2Zfxs";
-    private static final String ACCESS_KEY_SECRET = "I9BXcxj1nicmMOVJ9tFRqo8thFWaDQ";
+    private static final String ACCESS_KEY_ID = "LTAIMHWqCCnSDOTx";
+    private static final String ACCESS_KEY_SECRET = "jaQ7UcNNII7Fk9ZImElskSKXgXMRF8";
 
 
     public static void main(String[] args) {
@@ -58,7 +58,7 @@ public class AliYunSmsUtils {
         request.putQueryParameter("SignName", signName);
 
         if ("登录".equals(templateCode)){
-            templateCode = "SMS_172887387";
+            templateCode = "SMS_183200410";
         } else if ("注册".equals(templateCode)){
             templateCode = "SMS_172887416";
         }

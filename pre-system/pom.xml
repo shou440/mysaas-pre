@@ -23,12 +23,6 @@
             <groupId>com.xd</groupId>
             <artifactId>pre-myweixin</artifactId>
             <version>${pre.version}</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>servlet-api</artifactId>
-                    <groupId>javax.servlet</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.xd</groupId>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xd.pre.modules.myeletric.mapper.MyAreaMapper">
+    <resultMap id="getAreaByOwnerResult" type="com.xd.pre.modules.myeletric.domain.MyArea">
+        <result column="area_id" property="area_id" jdbcType="INTEGER"></result>
+        <result column="user_id" property="user_id" jdbcType="INTEGER"></result>
+        <result column="area_type" property="area_type" jdbcType="VARCHAR"></result>
+        <result column="area_city" property="area_city" jdbcType="VARCHAR"></result>
+        <result column="area_region" property="area_region" jdbcType="VARCHAR"></result>
+        <result column="area_addr" property="area_addr" jdbcType="VARCHAR"></result>
+        <result column="area_name" property="area_name" jdbcType="VARCHAR"></result>
+        <result column="area_memo" property="area_memo" jdbcType="VARCHAR"></result>
+    </resultMap>
+    <select id="getAreaByOwner" resultMap="getAreaByOwnerResult">
+        select * from my_area where user_id=#{userid}
+    </select>
+</mapper>

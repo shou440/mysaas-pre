@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xd.pre.common.exception.PreBaseException;
 import com.xd.pre.log.annotation.SysOperaLog;
+import com.xd.pre.modules.myeletric.dto.MyWXUserFilterDto;
 import com.xd.pre.security.util.SecurityUtil;
 import com.xd.pre.common.constant.PreConstant;
 import com.xd.pre.modules.sys.domain.SysUser;
@@ -15,6 +16,7 @@ import com.xd.pre.modules.sys.util.EmailUtil;
 import com.xd.pre.common.utils.R;
 import com.xd.pre.modules.sys.util.PreUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,6 +39,9 @@ public class SysUserController {
 
     @Autowired
     private EmailUtil emailUtil;
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
 
     /**
      * 保存用户包括角色和部门
@@ -93,6 +98,27 @@ public class SysUserController {
     }
 
 
+    //通过uuid获取微信认证用户的信息
+    @SysOperaLog(descrption = "获取微信用户信息")
+    @RequestMapping(value = "/getwxuserinfobyuuid", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+    public R getUserInfobyUUID( MyWXUserFilterDto filter) {
+
+        //获取code
+        String uuid = filter.getParam();
+
+        //获取当前连接的用户ID
+        try {
+
+            //将用户信息记录到Redis缓冲中
+            String userinfo = redisTemplate.opsForValue().get(uuid);
+            return R.ok(userinfo);
+
+        } catch (Exception ex) {
+
+            return R.error("获取微信用户信息失败");
+        }
+    }
+
     /**
      * 重置密码
      *
@@ -117,6 +143,7 @@ public class SysUserController {
     public R getUserInfo() {
         return R.ok(userService.findByUserInfoName(SecurityUtil.getUser().getUsername()));
     }
+
 
     /**
      * 修改密码

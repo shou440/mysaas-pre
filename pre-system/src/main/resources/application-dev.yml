@@ -28,8 +28,8 @@ pre:
         app-secret: 453e1be400a9cf207fea273f0d2c6248
         provider-id: qq
       weixin:
-        app-id: wx27e0de97cfa87385
-        app-secret: 1f8958cc2cb233d7a4f8b7d364bcb72c
+        app-id: wx5c451c1c46ba0ff9
+        app-secret: 41f76af6ab2478dccbcdd4d741cb5d02
         provider-id: weixin
   tenant:
     ignoreTenantTables:
@@ -43,7 +43,12 @@ pre:
       - TABLES
       - COLUMNS
       - sys_job
-      - rm_ttt
+      - my_room
+      - my_area
+      - my_meter
+      - my_wmeter
+      - my_map_user_meter
+      - my_map_user_wmeter
     tenantIdColumn: tenant_id
   url:
     address: http://localhost:9528
@@ -63,9 +68,9 @@ spring:
       max-lifetime: 30000
       maximum-pool-size: 10
       minimum-idle: 3
-    password: my3332361
+    password:
     type: com.zaxxer.hikari.HikariDataSource
-    url: jdbc:mysql://localhost:3306/saas?useUnicode=true&characterEncoding=UTF-8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:3306/saas?useUnicode=true&zeroDateTimeBehavior=convertToNull&characterEncoding=UTF-8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=Asia/Shanghai
     username: root
   mail:
     host: smtp.qq.com
@@ -81,7 +86,7 @@ spring:
   main:
     allow-bean-definition-overriding: true
   redis:
-    database: 1
+    database: 0
     host: localhost
     jedis:
       pool:

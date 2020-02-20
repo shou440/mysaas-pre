@@ -1,0 +1,23 @@
+package com.xd.pre.modules.myeletric.domain;
+
+import lombok.Data;
+import org.joda.time.DateTime;
+
+//电表
+@Data
+public class MyMeter {
+
+    /**
+     * 电表数据
+     */
+
+    private Integer  meter_id;
+    private Integer  room_id;
+    private String   meter_type;
+    private float    meter_ct;
+    private float    meter_pt;
+    private Integer  meter_status;
+    private String   meter_dec;
+    private DateTime meter_crt_date;
+    private DateTime meter_upt_date;
+}

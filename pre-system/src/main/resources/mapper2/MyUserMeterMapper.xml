@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xd.pre.modules.myeletric.mapper.MyUserMeterMapper">
+    <resultMap id="getUserMeterList" type="com.xd.pre.modules.myeletric.domain.MyUserMeter">
+        <result column="meter_id" property="meter_id" jdbcType="INTEGER"></result>
+        <result column="user_id" property="user_id" jdbcType="INTEGER"></result>
+        <result column="pay_id" property="pay_id" jdbcType="INTEGER"></result>
+    </resultMap>
+    <select id="getUserMeterByMeterid" resultMap="getUserMeterList">
+        select * from my_map_user_meter where meter_id=#{meterid}
+    </select>
+
+</mapper>

@@ -5,6 +5,7 @@ import com.xd.MyMqttStub;
 import com.xd.MyWeixinStub;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ApplicationContext;
 
 /**
  * 系统入口
@@ -23,6 +24,9 @@ public class PreSystemApplication {
         MyWeixinStub.getTheMyWeixinStub().StartWeixin();
 
         SpringApplication.run(PreSystemApplication.class, args);
+
+
+        }
     }
 
-}
+

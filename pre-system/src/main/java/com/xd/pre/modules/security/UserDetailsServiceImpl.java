@@ -30,6 +30,7 @@ import java.util.Set;
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService, SocialUserDetailsService {
 
+    //用户管理类，负责用户的登录、注册、添加权限、菜单管理等
     @Autowired
     private ISysUserService userService;
 

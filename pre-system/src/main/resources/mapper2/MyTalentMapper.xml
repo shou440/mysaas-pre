@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xd.pre.modules.myeletric.mapper.MyTalentInfoMapper">
+    <resultMap id="MyTalentInfoList" type="com.xd.pre.modules.myeletric.domain.MyTalentInfo">
+        <result column="talent_id" property="talent_id" jdbcType="INTEGER"></result>
+        <result column="room_id" property="room_id" jdbcType="INTEGER"></result>
+        <result column="user_id" property="user_id" jdbcType="INTEGER"></result>
+        <result column="talent_name" property="talent_name" jdbcType="VARCHAR"></result>
+        <result column="talent_tel" property="talent_tel" jdbcType="VARCHAR"></result>
+        <result column="talent_contactor" property="talent_contactor" jdbcType="VARCHAR"></result>
+    </resultMap>
+    <select id="getMyTalentInfoList" resultMap="MyTalentInfoList">
+        select * from my_talent where room_id=#{roomid}
+    </select>
+</mapper>

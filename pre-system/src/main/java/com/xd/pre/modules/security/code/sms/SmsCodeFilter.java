@@ -44,6 +44,7 @@ public class SmsCodeFilter extends OncePerRequestFilter {
         urls.add("/mobile/login");
     }
 
+    //拦截手机号登录的Rest请求
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         boolean action = false;

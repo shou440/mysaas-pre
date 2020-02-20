@@ -12,22 +12,20 @@ public class MyRoom {
      * 房间ID
       */
 
-
     private Integer room_id;
-    private String room_inside_id;
+    private Integer area_id;
     private String room_name;
+    private Integer room_status;
+    private Integer tenant_id;
     private String tenant_name;
-    private String tenant_tel;
-    private double ma_cost;
-    private double re_cost;
-    private double ot_cost;
+    private double tenant_fee;
+    private double tenant_manage_fee;
+    private double tenant_other_fee;
+
 
     /*
         private String T_NAME;
     private String T_AGE;
     * */
-
-
-
 
 }

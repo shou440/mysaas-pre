@@ -23,8 +23,8 @@
         <module>pre-log</module>
         <module>pre-generator</module>
         <module>pre-security</module>
-        <module>pre-myweixin</module>
         <module>pre-mymqtt</module>
+        <module>pre-myweixin</module>
     </modules>
 
     <properties>
