@@ -28,9 +28,9 @@ public class MyAreaController {
 
 
     //查看业主的所有园区
-    @PreAuthorize("hasAuthority('sys:area:gettalentareas')")
+    @PreAuthorize("hasAuthority('sys:room:view')")
     @SysOperaLog(descrption = "获取业主园区信息")
-    @GetMapping("/gettalentareas")
+    @GetMapping("/gettenantareas")
     public R getAreaList( ) {
 
         String ownerOpenid = "";

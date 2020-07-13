@@ -3,7 +3,9 @@ package com.xd.pre.modules.sys.controller;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.xd.MyWeixinStub;
 import com.xd.pre.common.exception.PreBaseException;
 import com.xd.pre.log.annotation.SysOperaLog;
 import com.xd.pre.modules.myeletric.dto.MyWXUserFilterDto;
@@ -19,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.weixin4j.model.sns.SnsUser;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -222,6 +225,7 @@ public class SysUserController {
         user.setEmail(mail);
         return R.ok(userService.updateUserInfo(user));
     }
+
 
 
 

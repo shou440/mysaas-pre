@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xd.pre.modules.myeletric.mapper.MyProductFunctionMapper">
+    <resultMap id="ProductFunctionInfo" type="com.xd.pre.modules.myeletric.domain.MyProductFunctionInfo">
+        <result column="product_name" property="product_name" jdbcType="VARCHAR"></result>
+        <result column="function_name" property="function_name" jdbcType="VARCHAR"></result>
+        <result column="max_seconds" property="max_seconds" jdbcType="INTEGER"></result>
+        <result column="function_dec" property="function_dec" jdbcType="VARCHAR"></result>
+        <result column="upt_tick" property="upt_tick" jdbcType="INTEGER"></result>
+    </resultMap>
+    <select id="getProductFunction" resultMap="ProductFunctionInfo">
+        select * from product_function where product_name=#{product_name}
+    </select>
+</mapper>

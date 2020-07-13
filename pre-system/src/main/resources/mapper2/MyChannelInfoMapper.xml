@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xd.pre.modules.myeletric.mapper.MyChannelInfoMapper">
+    <resultMap id="channelResult" type="com.xd.pre.modules.myeletric.domain.MyChannelInfo">
+        <result column="channel_id" property="channel_id" jdbcType="INTEGER"></result>
+        <result column="channel_name" property="channel_name" jdbcType="VARCHAR"></result>
+        <result column="channel_type" property="channel_type" jdbcType="VARCHAR"></result>
+        <result column="memo" property="memo" jdbcType="VARCHAR"></result>
+    </resultMap>
+    <select id="getAllChannels" resultMap="channelResult">
+        select * from my_channel
+    </select>
+    <select id="getChannel" resultMap="channelResult">
+        select * from my_channel where channel_id=#{channel_id}
+    </select>
+</mapper>

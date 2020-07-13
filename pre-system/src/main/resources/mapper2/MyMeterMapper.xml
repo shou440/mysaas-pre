@@ -9,12 +9,38 @@
         <result column="meter_ct" property="meter_ct" jdbcType="FLOAT"></result>
         <result column="meter_pt" property="meter_pt" jdbcType="FLOAT"></result>
         <result column="meter_status" property="meter_status" jdbcType="INTEGER"></result>
+        <result column="ep_base" property="ep_base" jdbcType="FLOAT"></result>
+        <result column="ep_last" property="ep_last" jdbcType="FLOAT"></result>
+        <result column="ep_price" property="ep_price" jdbcType="FLOAT"></result>
     </resultMap>
+    <resultMap id="MeterTenantRecord" type="com.xd.pre.modules.myeletric.domain.MyMeterRecord">
+        <result column="room_id" property="room_id" jdbcType="INTEGER"></result>
+        <result column="meter_id" property="meter_id" jdbcType="INTEGER"></result>
+        <result column="ep_cur" property="ep_cur" jdbcType="FLOAT"></result>
+        <result column="fresh_time" property="fresh_time" jdbcType="TIMESTAMP"></result>
+    </resultMap>
+    <select id="getAllMeterList" resultMap="getRoomMeterList">
+        select * from my_meter
+    </select>
+    <select id="getAreaMeterList" resultMap="getRoomMeterList">
+        select * from my_meter where room_id in (select room_id from my_room where area_id=#{areaid})
+    </select>
     <select id="getMeterList" resultMap="getRoomMeterList">
         select * from my_meter where room_id=#{roomid}
     </select>
     <select id="getMeter" resultMap="getRoomMeterList">
         select * from my_meter where meter_id=#{meterid}
+    </select>
+    <select id="getMeterByTenantOpenid" resultMap="getRoomMeterList">
+        select * from my_meter where room_id in (select room_id from my_room where tenant_openid=#{openid})
+    </select>
+    <select id="getMeterTenatList" resultMap="MeterTenantRecord">
+        select a.room_id,a.meter_id,a.ep_last,b.room_tenant_id from my_meter as a,my_room_tenant as b where a.room_id = b.room_id
+    </select>
+    <select id="getEpRecord" resultMap="MeterTenantRecord" parameterType="com.xd.pre.modules.myeletric.dto.MyMeterRdQryDto">
+        select * from my_meter_record where meter_id=#{queryparam.meter_id}
+                  and  fresh_time between #{queryparam.start_time} and #{queryparam.end_time}
+                  order by fresh_time asc
     </select>
     <update id="bindMeter" parameterType="com.xd.pre.modules.myeletric.dto.MyMeterFilter">
         update my_meter
@@ -32,4 +58,25 @@
         </set>
         where meter_id = #{meterid}
     </update>
+    <update id="updateMeter" parameterType="com.xd.pre.modules.myeletric.dto.MyMeterBasePriceDto">
+        update my_meter
+        <set>
+            ep_base = #{meterbaseprice.ep_base},
+            ep_price = #{meterbaseprice.ep_price},
+            meter_upt_date = now(),
+        </set>
+        where meter_id = #{meterbaseprice.meter_id}
+    </update>
+    <update id="updateMeterLastEp" parameterType="com.xd.pre.modules.myeletric.domain.MyMeter">
+        update my_meter
+        <set>
+            ep_last = #{meter.ep_last},
+            meter_upt_date = #{meter.meter_upt_date,jdbcType=TIMESTAMP}
+        </set>
+        where meter_id = #{meter.meter_id}
+    </update>
+    <insert id="recordEp" parameterType="com.xd.pre.modules.myeletric.domain.MyMeterRecord">
+        insert into my_meter_record (room_id,meter_id,ep_cur,fresh_time)
+        values (#{record.room_id},#{record.meter_id},#{record.ep_cur},#{record.fresh_time,jdbcType=TIMESTAMP})
+    </insert>
 </mapper>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xd.pre.modules.myeletric.mapper.MyRoomTenantMapper">
+    <resultMap id="roomTenantResult" type="com.xd.pre.modules.myeletric.domain.MyRoomTenant">
+        <result column="room_id" property="room_id" jdbcType="INTEGER"></result>
+        <result column="room_tenant_id" property="room_tenant_id" jdbcType="VARCHAR"></result>
+        <result column="period_start_time" property="period_start_time" jdbcType="TIMESTAMP"></result>
+    </resultMap>
+    <select id="getAllTenant" resultMap="roomTenantResult">
+        select * from my_room_tenant
+    </select>
+    <select id="getRoomLessor" resultMap="roomTenantResult">
+        select * from my_room_tenant where room_id =#{roomid}
+    </select>
+    <insert id="createNew" parameterType="INTEGER">
+        insert into my_room_tenant (room_id)
+        values ( #{roomid})
+    </insert>
+    <update id="LessorRoom" parameterType="com.xd.pre.modules.myeletric.dto.MyRoomTenantDto">
+        update my_room_tenant
+        <set>
+            room_tenant_id = #{roomtenant.room_tenant_id},
+            period_start_time = #{roomtenant.period_start_time,jdbcType=TIMESTAMP},
+        </set>
+        where room_id = #{roomtenant.room_id}
+    </update>
+    <update id="ResetTenant" parameterType="INTEGER">
+        update my_room_tenant
+        <set>
+            room_tenant_id = "",
+            period_start_time = now(),
+        </set>
+        where room_id = #{roomid}
+    </update>
+
+</mapper>

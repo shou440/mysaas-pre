@@ -11,4 +11,5 @@ public class MyWXUserFilterDto {
 
     private String  code;
     private String  param;
+    private String  openid;
 }

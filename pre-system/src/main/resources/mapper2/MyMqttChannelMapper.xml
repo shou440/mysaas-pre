@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xd.pre.modules.myeletric.mapper.MyMqttChannelMapper">
+    <resultMap id="mqttChannelResult" type="com.xd.pre.modules.myeletric.domain.MyChannelMqttInfo">
+        <result column="channel_id" property="channel_id" jdbcType="INTEGER"></result>
+        <result column="server_ip" property="server_ip" jdbcType="VARCHAR"></result>
+        <result column="server_port" property="server_port" jdbcType="INTEGER"></result>
+        <result column="client_id" property="client_id" jdbcType="VARCHAR"></result>
+        <result column="pass_word" property="pass_word" jdbcType="VARCHAR"></result>
+        <result column="qs_level" property="qs_level" jdbcType="INTEGER"></result>
+    </resultMap>
+    <select id="getChannel" resultMap="mqttChannelResult">
+        select * from my_channel_mqtt where channel_id=#{channel_id}
+    </select>
+</mapper>

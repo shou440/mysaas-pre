@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xd.pre.modules.myeletric.mapper.MyProductDeviceMapper">
+    <resultMap id="ProductDeviceInfo" type="com.xd.pre.modules.myeletric.domain.MyProductDeviceInfo">
+        <result column="product_name" property="product_name" jdbcType="VARCHAR"></result>
+        <result column="device_name" property="device_name" jdbcType="VARCHAR"></result>
+        <result column="device_group" property="device_group" jdbcType="VARCHAR"></result>
+        <result column="device_type" property="device_type" jdbcType="INTEGER"></result>
+        <result column="device_key" property="device_key" jdbcType="VARCHAR"></result>
+        <result column="sub_index" property="sub_index" jdbcType="INTEGER"></result>
+        <result column="device_no" property="device_no" jdbcType="INTEGER"></result>
+        <result column="device_dec" property="device_dec" jdbcType="VARCHAR"></result>
+        <result column="gateway_name" property="gateway_name" jdbcType="VARCHAR"></result>
+        <result column="gateway_channel" property="gateway_channel" jdbcType="VARCHAR"></result>
+        <result column="upt_tick" property="upt_tick" jdbcType="INTEGER"></result>
+    </resultMap>
+    <select id="getProductDevice" resultMap="ProductDeviceInfo">
+        select * from product_device where product_name=#{product_name}
+    </select>
+</mapper>

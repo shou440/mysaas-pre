@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xd.pre.modules.myeletric.mapper.MyProductPropertyRecordMapper">
+    <resultMap id="propertyHisRecord" type="com.xd.pre.modules.myeletric.domain.MyPropertyRecord">
+        <result column="product_name" property="product_name" jdbcType="VARCHAR"></result>
+        <result column="device_name" property="device_name" jdbcType="VARCHAR"></result>
+        <result column="property_name" property="property_name" jdbcType="VARCHAR"></result>
+        <result column="property_value" property="property_value" jdbcType="FLOAT"></result>
+        <result column="is_valid" property="is_valid" jdbcType="INTEGER"></result>
+        <result column="save_tick" property="save_tick" jdbcType="INTEGER"></result>
+    </resultMap>
+    <insert id="recordProperty" parameterType="com.xd.pre.modules.myeletric.domain.MyPropertyRecord">
+        insert into property_record (product_name,device_name,property_name,property_value,is_valid,save_tick)
+        values (#{record.product_name},#{record.device_name},#{record.property_name},#{record.property_value},#{record.is_valid},#{record.save_tick})
+    </insert>
+</mapper>

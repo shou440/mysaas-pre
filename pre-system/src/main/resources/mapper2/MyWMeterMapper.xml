@@ -5,15 +5,41 @@
     <resultMap id="getRoomWMeterList" type="com.xd.pre.modules.myeletric.domain.MyWMeter">
         <result column="meter_id" property="meter_id" jdbcType="INTEGER"></result>
         <result column="room_id" property="room_id" jdbcType="INTEGER"></result>
+        <result column="meter_sn" property="meter_sn" jdbcType="VARCHAR"></result>
         <result column="meter_type" property="meter_type" jdbcType="VARCHAR"></result>
         <result column="meter_scale" property="meter_scale" jdbcType="FLOAT"></result>
         <result column="meter_status" property="meter_status" jdbcType="INTEGER"></result>
+        <result column="water_base" property="water_base" jdbcType="FLOAT"></result>
+        <result column="water_last" property="water_last" jdbcType="FLOAT"></result>
+        <result column="water_price" property="water_price" jdbcType="FLOAT"></result>
     </resultMap>
+    <resultMap id="WMeterTenantRecord" type="com.xd.pre.modules.myeletric.domain.MyWMeterRecord">
+        <result column="room_id" property="room_id" jdbcType="INTEGER"></result>
+        <result column="meter_id" property="meter_id" jdbcType="INTEGER"></result>
+        <result column="water_cur" property="water_cur" jdbcType="FLOAT"></result>
+        <result column="water_last" property="water_last" jdbcType="FLOAT"></result>
+        <result column="water_used" property="water_used" jdbcType="FLOAT"></result>
+        <result column="fresh_time" property="fresh_time" jdbcType="TIMESTAMP"></result>
+    </resultMap>
+    <select id="getAllMeterList" resultMap="getRoomWMeterList">
+        select * from my_wmeter
+    </select>
+    <select id="getAreaWMeterList" resultMap="getRoomWMeterList">
+        select * from my_wmeter where room_id in (select room_id from my_room where area_id=#{areaid})
+    </select>
     <select id="getWMeterList" resultMap="getRoomWMeterList">
         select * from my_wmeter where room_id=#{roomid}
     </select>
     <select id="getWMeter" resultMap="getRoomWMeterList">
         select * from my_wmeter where meter_id=#{meterid}
+    </select>
+    <select id="getMeterTenatList" resultMap="WMeterTenantRecord">
+        select a.room_id,a.meter_id,a.water_last,b.room_tenant_id from my_wmeter as a,my_room_tenant as b where a.room_id = b.room_id
+    </select>
+    <select id="getWaterRecord" resultMap="WMeterTenantRecord" parameterType="com.xd.pre.modules.myeletric.dto.MyMeterRdQryDto">
+        select * from my_wmeter_record where meter_id=#{queryparam.meter_id}
+                  and  fresh_time between #{queryparam.start_time} and #{queryparam.end_time}
+                  order by fresh_time asc
     </select>
     <update id="bindWMeter" parameterType="com.xd.pre.modules.myeletric.dto.MyMeterFilter">
         update my_wmeter
@@ -31,4 +57,25 @@
         </set>
         where meter_id = #{meterid}
     </update>
+    <update id="updateWMeter" parameterType="com.xd.pre.modules.myeletric.dto.MyWMeterBasePriceDto">
+        update my_wmeter
+        <set>
+            water_base = #{wmeterbaseprice.water_base},
+            water_price = #{wmeterbaseprice.water_price},
+            meter_upt_date = now(),
+        </set>
+        where meter_id = #{wmeterbaseprice.meter_id}
+    </update>
+    <update id="updateMeterLastWater" parameterType="com.xd.pre.modules.myeletric.domain.MyWMeter">
+        update my_wmeter
+        <set>
+            water_last = #{meter.water_last},
+            meter_upt_date = #{meter.meter_upt_date,jdbcType=TIMESTAMP}
+        </set>
+        where meter_id = #{meter.meter_id}
+    </update>
+    <insert id="recordWater" parameterType="com.xd.pre.modules.myeletric.domain.MyWMeterRecord">
+        insert into my_wmeter_record (room_id,meter_id,water_cur,water_last,water_used,fresh_time)
+        values (#{record.room_id},#{record.meter_id},#{record.water_cur},#{record.water_last},#{record.water_used},#{record.fresh_time,jdbcType=TIMESTAMP})
+    </insert>
 </mapper>

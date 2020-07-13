@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xd.pre.modules.myeletric.mapper.MyProductSignalMapper">
+    <resultMap id="SignalInfo" type="com.xd.pre.modules.myeletric.domain.MyProductSignalInfo">
+        <result column="product_name" property="product_name" jdbcType="VARCHAR"></result>
+        <result column="signal_name" property="signal_name" jdbcType="VARCHAR"></result>
+        <result column="value0_dec" property="value0_dec" jdbcType="VARCHAR"></result>
+        <result column="value1_dec" property="value1_dec" jdbcType="VARCHAR"></result>
+        <result column="signal_dec" property="signal_dec" jdbcType="VARCHAR"></result>
+        <result column="upt_tick" property="upt_tick" jdbcType="INTEGER"></result>
+    </resultMap>
+    <select id="getProductSignal" resultMap="SignalInfo">
+        select * from product_signal where product_name=#{product_name}
+    </select>
+</mapper>

@@ -78,11 +78,14 @@ public class AliYunSmsUtils {
             JSONObject jsonObject = JSONObject.parseObject(responseData);
             String code = (String) jsonObject.get("Code");
             if (StrUtil.isNotEmpty(code) && "OK".equals(code)) {
+
+                System.out.print(phone + ",发送短信成功");
                 //请求成功
                 log.info(phone + ",发送短信成功");
                 smsResponse.setSmsCode(random);
                 smsResponse.setSmsPhone(phone);
                 smsResponse.setSmsTime(System.nanoTime() + "");
+                System.out.print("响应:" + smsResponse);
                 return smsResponse;
             } else {
                 log.error(phone + ",发送短信失败:{}", jsonObject.get("Message"));

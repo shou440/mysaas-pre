@@ -15,4 +15,7 @@
     <select id="getAreaByOwner" resultMap="getAreaByOwnerResult">
         select * from my_area where user_id=#{userid}
     </select>
+    <select id="getAreaByID" resultMap="getAreaByOwnerResult">
+        select * from my_area where area_id=#{areaid}
+    </select>
 </mapper>

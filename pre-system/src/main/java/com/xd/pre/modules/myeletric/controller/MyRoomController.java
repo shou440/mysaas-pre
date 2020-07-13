@@ -1,31 +1,19 @@
 package com.xd.pre.modules.myeletric.controller;
 
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONObject;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.xd.pre.common.exception.PreBaseException;
+
+import com.xd.MyWeixinStub;
 import com.xd.pre.log.annotation.SysOperaLog;
 import com.xd.pre.modules.myeletric.domain.MyRoom;
-import com.xd.pre.modules.myeletric.domain.MyTalentInfo;
-import com.xd.pre.modules.myeletric.dto.MyNewRoomParam;
-import com.xd.pre.modules.myeletric.dto.MyRoomDto;
-import com.xd.pre.modules.myeletric.dto.MyRoomFilterDto;
-import com.xd.pre.modules.myeletric.dto.MyTalentInfoDto;
+import com.xd.pre.modules.myeletric.domain.MyRoomTenant;
+import com.xd.pre.modules.myeletric.dto.*;
+import com.xd.pre.modules.myeletric.mapper.MyRoomTenantMapper;
 import com.xd.pre.modules.myeletric.service.IMyRoomService;
-import com.xd.pre.modules.myeletric.service.IMyTalentInfoService;
-import com.xd.pre.modules.myeletric.vo.MyTalentInfoVo;
-import com.xd.pre.modules.sys.dto.RoleDTO;
-import com.xd.pre.security.util.SecurityUtil;
-import com.xd.pre.common.constant.PreConstant;
-import com.xd.pre.modules.sys.util.EmailUtil;
 import com.xd.pre.common.utils.R;
-import com.xd.pre.modules.sys.util.PreUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.weixin4j.model.user.User;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 
@@ -37,12 +25,11 @@ public class MyRoomController {
     private IMyRoomService myRoomService;
 
     @Autowired
-    private IMyTalentInfoService myTalentInfoService;
-
+    private MyRoomTenantMapper myRoomTenantMapper;
 
     @PreAuthorize("hasAuthority('sys:room:view')")
     @SysOperaLog(descrption = "获取业主房间信息")
-    @RequestMapping(value = "/gettalentrooms", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+    @RequestMapping(value = "/gettenantrooms", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
     public R getRoomList(MyRoomFilterDto  request) {
 
         Integer roomid = 0;
@@ -69,7 +56,7 @@ public class MyRoomController {
         }
         catch (Exception ex)
         {
-            return R.error("添加房间异常,请检查同一园区是否有重复的名称！");
+            return R.error("添加房间异常,请检查同一园区是否有重复的名称！"+ex.getMessage());
         }
 
     }
@@ -93,25 +80,134 @@ public class MyRoomController {
     }
 
     @PreAuthorize("hasAuthority('sys:room:view')")
-    @SysOperaLog(descrption = "获取租户信息")
-    @RequestMapping(value = "/gettanlentinfo", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
-    public R getTalentInfo(MyTalentInfoDto talentInfo) {
+    @SysOperaLog(descrption = "修改房间租户信息")
+    @RequestMapping(value = "/updateroomtenant", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+    public R updateRoomTenant(MyRoomDto room) {
 
         //修改房间
         try
         {
-           MyTalentInfo talentInfoVo =  myTalentInfoService.getTanlentInfo(talentInfo.getRoom_id());
-           if (null == talentInfoVo)
-           {
-               return R.ok("获取租户信息为空");
-           }
-
-           return R.ok(talentInfoVo);
+            myRoomService.updateRoomtenant(room);
+            return R.ok("修改成功");
         }
         catch (Exception ex)
         {
-            return R.error("获取租户信息异常");
+            return R.error("修改异常");
         }
 
+    }
+
+    @PreAuthorize("hasAuthority('sys:room:view')")
+    @SysOperaLog(descrption = "出租房间")
+    @RequestMapping(value = "/lessorroom", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+    public R LessorRoom(MyRoomLessorDto roomLessorDto) {
+
+        //修改房间
+        try
+        {
+            //检查房间是否存在
+            if (null == roomLessorDto)
+            {
+                return R.error("房间参数错误");
+            }
+
+            MyRoom room = myRoomService.getRoomByID(roomLessorDto.getRoom_id());
+            if (null == room)
+            {
+                return R.error("房间不存在！");
+            }
+
+            if (room.getRoom_status() != 0)
+            {
+                return R.error("房间已经出租！");
+            }
+
+            if (room.getRoom_name() == null || room.getRoom_name() == "")
+            {
+                return R.error("房间编号不能为空！");
+            }
+
+            if (room.getTenant_name() == null || room.getTenant_name() == "")
+            {
+                return R.error("租户名称不能为空！");
+            }
+
+           if(0 ==  myRoomService.LessorRoom(roomLessorDto))
+           {
+               return R.error("出租房间失败");
+           }
+
+            return R.ok("修改成功");
+        }
+        catch (Exception ex)
+        {
+            return R.error("修改异常");
+        }
+
+    }
+
+    @PreAuthorize("hasAuthority('sys:room:view')")
+    @SysOperaLog(descrption = "退租房间")
+    @RequestMapping(value = "/unlessorroom", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+    public R UnLessorRoom(MyRoomLessorDto roomLessorDto) {
+
+        //退租房间
+        try
+        {
+            //检查房间是否存在
+            if (null == roomLessorDto)
+            {
+                return R.error("房间参数错误");
+            }
+
+            MyRoom room = myRoomService.getRoomByID(roomLessorDto.getRoom_id());
+            if (null == room)
+            {
+                return R.error("房间不存在！");
+            }
+
+            if (room.getRoom_status() == 0)
+            {
+                return R.error("房间已经空置状态，无法退租！");
+            }
+
+            //办理房间退租
+            String sErr = "";
+            int ret = myRoomService.UnLessorRoom(roomLessorDto,sErr);
+            if (ret == 0)
+            {
+                return R.error("退租异常:"+sErr);
+            }
+
+
+            return R.ok("退租成功");
+        }
+        catch (Exception ex)
+        {
+            return R.error("退租异常"+ex.getMessage());
+        }
+
+    }
+
+    //通过openid拉取用户的信息,在此调用此函数是为了避免在MyWeixinController中权限
+    // 认证没有传递X-Token导致的强制退出当前登录问题
+    @SysOperaLog(descrption = "获取租户微信信息")
+    @PreAuthorize("hasAuthority('sys:room:view')")
+    @RequestMapping(value = "/getwxuserdetail", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+    public R getwxUserDetailByOpenid( MyWXUserFilterDto filter) {
+
+        //获取code
+        String openid = filter.getOpenid();
+
+        //获取当前连接的用户ID
+        try {
+            System.out.print("Query Wechat Info"+openid);
+            User user = MyWeixinStub.getTheMyWeixinStub().GetUserDetailByOpenid(openid);
+            System.out.print(user);
+            return R.ok(user);
+        } catch (Exception ex) {
+
+            return R.error("获取微信用户信息失败");
+        }
     }
 }

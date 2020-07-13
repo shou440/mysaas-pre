@@ -165,7 +165,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         if (ObjectUtil.isNotNull(securityUser)) {
             throw new PreBaseException("手机号已被注册");
         }
-        userDTO.setDeptId(6);
+        userDTO.setDeptId(7);    //集抄业主部门
         userDTO.setLockFlag("0");
         SysUser sysUser = new SysUser();
         // 对象拷贝
@@ -174,7 +174,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         sysUser.setPassword(PreUtil.encode(userDTO.getPassword()));
         baseMapper.insertUser(sysUser);
         SysUserRole sysUserRole = new SysUserRole();
-        sysUserRole.setRoleId(14);
+        sysUserRole.setRoleId(10);    //
         sysUserRole.setUserId(sysUser.getUserId());
         return userRoleService.save(sysUserRole);
     }

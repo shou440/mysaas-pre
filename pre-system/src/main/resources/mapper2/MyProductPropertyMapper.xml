@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xd.pre.modules.myeletric.mapper.MyProductPropertyMapper">
+    <resultMap id="PropertyInfo" type="com.xd.pre.modules.myeletric.domain.MyProductPropertyInfo">
+        <result column="product_name" property="product_name" jdbcType="VARCHAR"></result>
+        <result column="property_name" property="property_name" jdbcType="VARCHAR"></result>
+        <result column="property_dec" property="property_dec" jdbcType="VARCHAR"></result>
+        <result column="value_type" property="value_type" jdbcType="INTEGER"></result>
+        <result column="float_bits" property="float_bits" jdbcType="INTEGER"></result>
+        <result column="value_weight" property="value_weight" jdbcType="VARCHAR"></result>
+        <result column="upt_tick" property="upt_tick" jdbcType="INTEGER"></result>
+    </resultMap>
+    <select id="getProductProperty" resultMap="PropertyInfo">
+        select * from product_property where product_name=#{product_name}
+    </select>
+</mapper>

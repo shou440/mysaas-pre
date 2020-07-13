@@ -14,4 +14,7 @@ public class PreConstant {
     public static final String PRE_TENANT_KEY = "TENANT_ID";
 
 
+    public static  final  int   ERR_CHANNEL_GATHER_REPEAT = 0x0010;        //采集器的设备名称重复
+    public static  final  int   ERR_CHANNEL_GATHER_NONE   = 0x0011;        //添加的采集器为空
+    public static  final  int   ERR_CHANNEL_DEVICE_NONE   = 0x0012;        //采集器对应的设备为空
 }

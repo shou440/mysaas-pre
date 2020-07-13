@@ -103,7 +103,9 @@ public class PreWebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/tenant/setting/**").anonymous()
                 .antMatchers("/define/deploy/**").anonymous()
                 .antMatchers("/weixin/**").anonymous()
+                .antMatchers("/premeter/**").anonymous()
                 .antMatchers("/pre/weixin/**").anonymous()
+                .antMatchers("/pre/premeter/**").anonymous()
                 .antMatchers("/file/**")
                 .permitAll()
                 // 访问/user 需要拥有admin权限

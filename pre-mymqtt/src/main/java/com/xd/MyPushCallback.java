@@ -6,6 +6,13 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 public class MyPushCallback implements MqttCallback {
 
+    public MyPushCallback()
+    {
+
+    }
+
+
+
     public void connectionLost(Throwable cause) {
         // 连接丢失后，一般在这里面进行重连
 

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xd.pre.modules.prepay.mapper.PreMeterMapper">
+    <resultMap id="preMeterList" type="com.xd.pre.modules.prepay.domain.PreMeter">
+        <result column="meter_id" property="meter_id" jdbcType="INTEGER"></result>
+        <result column="meter_type" property="meter_type" jdbcType="VARCHAR"></result>
+        <result column="meter_sn" property="meter_sn" jdbcType="VARCHAR"></result>
+        <result column="meter_addr" property="meter_addr" jdbcType="VARCHAR"></result>
+        <result column="room_name" property="room_name" jdbcType="VARCHAR"></result>
+        <result column="owner_openid" property="owner_openid" jdbcType="VARCHAR"></result>
+        <result column="owner_tel" property="owner_tel" jdbcType="VARCHAR"></result>
+        <result column="manange_openid" property="manange_openid" jdbcType="VARCHAR"></result>
+        <result column="manage_tel" property="manage_tel" jdbcType="VARCHAR"></result>
+        <result column="tenant_openid" property="tenant_openid" jdbcType="VARCHAR"></result>
+        <result column="tenant_tel" property="tenant_tel" jdbcType="VARCHAR"></result>
+        <result column="tenant1_openid" property="tenant1_openid" jdbcType="VARCHAR"></result>
+        <result column="tenant1_tel" property="tenant1_tel" jdbcType="VARCHAR"></result>
+        <result column="ep_price" property="ep_price" jdbcType="FLOAT"></result>
+        <result column="ep_scale" property="ep_scale" jdbcType="FLOAT"></result>
+        <result column="meter_upt_date" property="meter_upt_date" jdbcType="TIMESTAMP"></result>
+        <result column="memo" property="memo" jdbcType="VARCHAR"></result>
+    </resultMap>
+    <select id="getMeterByID" resultMap="preMeterList" parameterType="INTEGER">
+        select * from pre_meter where meter_id=#{meterid}
+    </select>
+    <select id="getMetersByOwner" resultMap="preMeterList">
+        select * from pre_meter where owner_openid=#{openid,jdbcType=VARCHAR}
+    </select>
+    <select id="getMetersByTenant" resultMap="preMeterList" >
+        select * from pre_meter where tenant_openid=#{openid,jdbcType=VARCHAR} or tenant1_openid=#{openid,jdbcType=VARCHAR}
+    </select>
+    <update id="bindOwner" parameterType="com.xd.pre.modules.prepay.dto.PreMeterDto">
+        update pre_meter
+        <set>
+            room_name = #{premeter.room_name},
+            meter_addr = #{premeter.meter_addr},
+            owner_openid = #{premeter.owner_openid},
+            owner_tel = #{premeter.owner_tel},
+            ep_price = #{premeter.ep_price},
+            meter_upt_date = now(),
+        </set>
+        where meter_id = #{premeter.meter_id}
+    </update>
+    <update id="bindTenant" parameterType="com.xd.pre.modules.prepay.dto.PreMeterDto">
+        update pre_meter
+        <set>
+            tenant_openid = #{premeter.tenant_openid,jdbcType=VARCHAR},
+            meter_upt_date = now(),
+        </set>
+        where meter_id = #{premeter.meter_id}
+    </update>
+
+</mapper>

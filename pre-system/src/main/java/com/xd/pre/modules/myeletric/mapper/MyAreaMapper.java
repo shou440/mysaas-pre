@@ -13,4 +13,6 @@ import java.util.List;
 public interface MyAreaMapper extends BaseMapper<MyArea> {
 
     public List<MyArea> getAreaByOwner(@Param("userid") Integer userid);
+    public List<MyArea> getAreaByID(@Param("areaid") Integer areaid);
+
 }

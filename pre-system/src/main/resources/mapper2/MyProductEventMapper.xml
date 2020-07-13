@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xd.pre.modules.myeletric.mapper.MyProductEventMapper">
+    <resultMap id="ProductEventInfo" type="com.xd.pre.modules.myeletric.domain.MyProductEventInfo">
+        <result column="product_name" property="product_name" jdbcType="VARCHAR"></result>
+        <result column="event_name" property="event_name" jdbcType="VARCHAR"></result>
+        <result column="event_dec" property="event_dec" jdbcType="VARCHAR"></result>
+        <result column="event_type" property="event_type" jdbcType="INTEGER"></result>
+        <result column="upt_tick" property="upt_tick" jdbcType="INTEGER"></result>
+    </resultMap>
+    <select id="getProductEvent" resultMap="ProductEventInfo">
+        select * from product_event where product_name=#{product_name}
+    </select>
+</mapper>

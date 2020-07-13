@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xd.pre.modules.myeletric.mapper.MyMeterFeeMapper">
+    <resultMap id="meterFeeResult" type="com.xd.pre.modules.myeletric.domain.MyMeterFee">
+        <result column="area_id" property="area_id" jdbcType="INTEGER"></result>
+        <result column="room_id" property="room_id" jdbcType="INTEGER"></result>
+        <result column="meter_id" property="meter_id" jdbcType="INTEGER"></result>
+        <result column="user_id" property="user_id" jdbcType="INTEGER"></result>
+        <result column="tenant_id" property="tenant_id" jdbcType="VARCHAR"></result>
+        <result column="fee_sn" property="fee_sn" jdbcType="VARCHAR"></result>
+        <result column="payment_id" property="payment_id" jdbcType="VARCHAR"></result>
+        <result column="area_city" property="area_city" jdbcType="VARCHAR"></result>
+        <result column="area_name" property="area_name" jdbcType="VARCHAR"></result>
+        <result column="room_name" property="room_name" jdbcType="VARCHAR"></result>
+        <result column="tenant_name" property="tenant_name" jdbcType="VARCHAR"></result>
+        <result column="tenant_openid" property="tenant_openid" jdbcType="VARCHAR"></result>
+        <result column="ep_start" property="ep_start" jdbcType="FLOAT"></result>
+        <result column="ep_end" property="ep_end" jdbcType="FLOAT"></result>
+        <result column="ep_used" property="ep_used" jdbcType="FLOAT"></result>
+        <result column="ep_price" property="ep_price" jdbcType="FLOAT"></result>
+        <result column="total_fee" property="total_fee" jdbcType="FLOAT"></result>
+        <result column="fee_status" property="fee_status" jdbcType="INTEGER"></result>
+        <result column="time_start" property="time_start" jdbcType="TIMESTAMP"></result>
+        <result column="time_end" property="time_end" jdbcType="TIMESTAMP"></result>
+        <result column="time_crt" property="time_crt" jdbcType="TIMESTAMP"></result>
+        <result column="time_upt" property="time_upt" jdbcType="TIMESTAMP"></result>
+    </resultMap>
+    <select id="getMeterFeeByArea" resultMap="meterFeeResult" parameterType="com.xd.pre.modules.myeletric.dto.MyMeterFeeQueryDto">
+        select * from my_meter_fee where area_id= #{queryParam.area_id} and time_crt between #{queryParam.start_time} and #{queryParam.end_time}
+    </select>
+
+    <select id="getMeterFeeByRoom" resultMap="meterFeeResult" parameterType="com.xd.pre.modules.myeletric.dto.MyMeterFeeQueryDto">
+        select * from my_meter_fee where room_id= #{queryParam.room_id} and time_crt between #{queryParam.start_time} and #{queryParam.end_time}
+    </select>
+
+    <select id="getMeterFeeByMeter" resultMap="meterFeeResult" parameterType="com.xd.pre.modules.myeletric.dto.MyMeterFeeQueryDto">
+        select * from my_meter_fee where meter_id= #{queryParam.meter_id}  and time_crt between #{queryParam.start_time} and #{queryParam.end_time}
+    </select>
+    <select id="getMeterFeeBySn" resultMap="meterFeeResult">
+        select * from my_meter_fee where fee_sn= #{fee_sn}
+    </select>
+    <select id="getMeterFeeByTenantOpenid" resultMap="meterFeeResult" parameterType="com.xd.pre.modules.myeletric.dto.MyTenantFeeQueryDto">
+        select * from my_meter_fee where tenant_openid= #{queryParam.open_id} and fee_status > 0  and time_crt between #{queryParam.start_time} and #{queryParam.end_time}
+    </select>
+    <update id="prePayMeterFee" parameterType="com.xd.pre.modules.myeletric.dto.MyMeterFeeUptParam">
+        update my_meter_fee
+        <set>
+            payment_id = #{param.payment_id},
+            fee_status = 1,
+            quest_upt_time = #{param.quest_upt_time,jdbcType=TIMESTAMP},
+        </set>
+        where meter_id = #{param.meter_id}
+    </update>
+    <update id="updateStatus" parameterType="com.xd.pre.modules.myeletric.dto.MyMeterFeeUptParam" >
+
+        update my_meter_fee
+        <set >
+            <if test="item.fee_status != null" >
+                fee_status  = #{item.fee_status,jdbcType=INTEGER},
+            </if>
+        </set>
+        where meter_id = #{item.meter_id,jdbcType=INTEGER} and fee_sn = #{item.fee_sn,jdbcType=VARCHAR}
+
+    </update>
+    <update id="updatePayment" parameterType="com.xd.pre.modules.myeletric.dto.MyMeterFeeUptParam" >
+
+        update my_meter_fee
+        <set >
+            <if test="item.fee_status != null" >
+                payment_id  = #{item.payment_id,jdbcType=VARCHAR},
+                fee_status  = #{item.fee_status,jdbcType=INTEGER},
+            </if>
+        </set>
+        where  fee_sn = #{item.fee_sn,jdbcType=VARCHAR}
+
+    </update>
+    <update id="unLockByPaymentResult" parameterType="com.xd.pre.modules.myeletric.dto.MyMeterFeeUptParam" >
+
+        update my_meter_fee
+        <set >
+                fee_status  = #{item.fee_status,jdbcType=INTEGER},
+        </set>
+        where  payment_id = #{item.payment_id,jdbcType=VARCHAR}
+
+    </update>
+    <insert id="saveMeterFee" parameterType="com.xd.pre.modules.myeletric.domain.MyMeterFee">
+        insert into my_meter_fee (area_id,room_id,meter_id,user_id,tenant_id,fee_sn,payment_id,
+                                  area_city,area_name,room_name,tenant_name,tenant_openid,
+                                  ep_start,ep_end,ep_used,ep_price,total_fee,fee_status,
+                                  time_start,time_end,time_crt,time_upt)
+                            values (#{fee.area_id},#{fee.room_id},#{fee.meter_id},#{fee.user_id},#{fee.tenant_id},#{fee.fee_sn},#{fee.payment_id},
+                                   #{fee.area_city},#{fee.area_name},#{fee.room_name},#{fee.tenant_name},#{fee.tenant_openid},
+                                   #{fee.ep_start},#{fee.ep_end},#{fee.ep_used},#{fee.ep_price},#{fee.total_fee},#{fee.fee_status},
+                                   #{fee.time_start,jdbcType=TIMESTAMP},#{fee.time_end,jdbcType=TIMESTAMP},#{fee.time_crt,jdbcType=TIMESTAMP},#{fee.time_upt,jdbcType=TIMESTAMP})
+     </insert>
+</mapper>

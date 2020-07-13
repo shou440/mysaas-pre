@@ -7,40 +7,53 @@
         <result column="area_id" property="area_id" jdbcType="INTEGER"></result>
         <result column="room_name" property="room_name" jdbcType="VARCHAR"></result>
         <result column="room_status" property="room_status" jdbcType="INTEGER"></result>
-        <result column="tenant_id" property="tenant_id" jdbcType="INTEGER"></result>
-        <result column="tenant_name" property="tenant_name" jdbcType="VARCHAR"></result>
         <result column="tenant_fee" property="tenant_fee" jdbcType="DECIMAL"></result>
         <result column="tenant_manage_fee" property="tenant_manage_fee" jdbcType="DECIMAL"></result>
         <result column="tenant_other_fee" property="tenant_other_fee" jdbcType="DECIMAL"></result>
+        <result column="tenant_name" property="tenant_name" jdbcType="VARCHAR"></result>
+        <result column="tenant_contactor" property="tenant_contactor" jdbcType="VARCHAR"></result>
+        <result column="tenant_tel" property="tenant_tel" jdbcType="VARCHAR"></result>
+        <result column="tenant_openid" property="tenant_openid" jdbcType="VARCHAR"></result>
+        <result column="tenant_time" property="tenant_time" jdbcType="TIMESTAMP"></result>
     </resultMap>
     <select id="getRoomInfo" resultMap="getRoomInfoResult">
-        select * from my_room where room_areaid =#{areaid}
+        select * from my_room where area_id =#{areaid}
     </select>
     <select id="getRoomByID" resultMap="getRoomInfoResult">
         select * from my_room where room_id =#{roomid}
     </select>
 
     <insert id="createNewRoom" useGeneratedKeys="true" keyProperty="room_id" parameterType="com.xd.pre.modules.myeletric.dto.MyRoomDto">
-        insert into my_room (room_areaid, room_name)
+        insert into my_room (area_id, room_name)
         values ( #{room.area_id}, #{room.room_name})
     </insert>
     <update id="updateRoominfo" parameterType="com.xd.pre.modules.myeletric.dto.MyRoomDto">
         update my_room
         <set>
-
                 room_name = #{room.room_name},
-
-
                 tenant_fee = #{room.tenant_fee},
-
-
                 tenant_manage_fee = #{room.tenant_manage_fee},
-
-
                 tenant_other_fee = #{room.tenant_other_fee},
-
                 room_upt_date = now(),
-
+        </set>
+        where room_id = #{room.room_id}
+    </update>
+    <update id="updateRoomtenant" parameterType="com.xd.pre.modules.myeletric.dto.MyRoomDto">
+        update my_room
+        <set>
+            tenant_name = #{room.tenant_name},
+            tenant_contactor = #{room.tenant_contactor},
+            tenant_tel = #{room.tenant_tel},
+            tenant_openid = #{room.tenant_openid},
+            room_upt_date = now(),
+        </set>
+        where room_id = #{room.room_id}
+    </update>
+    <update id="updateRoomStatus" parameterType="com.xd.pre.modules.myeletric.dto.MyRoomDto">
+        update my_room
+        <set>
+            room_status = #{room.room_status},
+            room_upt_date = now(),
         </set>
         where room_id = #{room.room_id}
     </update>

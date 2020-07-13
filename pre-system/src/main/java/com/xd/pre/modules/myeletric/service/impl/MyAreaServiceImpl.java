@@ -21,4 +21,16 @@ public class MyAreaServiceImpl  extends ServiceImpl<MyAreaMapper, MyArea> implem
         return  list;
 
     }
+
+    @Override
+    public MyArea getAreaByID(Integer areaid)
+    {
+        List<MyArea> list=baseMapper.getAreaByID(areaid);
+
+        if (null == list || list.size() ==0)
+        {
+            return  null;
+        }
+        return  list.get(0);
+    }
 }

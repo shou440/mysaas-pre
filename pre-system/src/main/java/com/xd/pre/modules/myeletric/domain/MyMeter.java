@@ -18,6 +18,9 @@ public class MyMeter {
     private float    meter_pt;
     private Integer  meter_status;
     private String   meter_dec;
+    private float    ep_base;
+    private float    ep_last;
+    private float    ep_price;
     private DateTime meter_crt_date;
     private DateTime meter_upt_date;
 }

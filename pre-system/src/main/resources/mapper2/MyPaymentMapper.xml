@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xd.pre.modules.pay.mapper.MyPaymentMapper">
+    <resultMap id="paymentResult" type="com.xd.pre.modules.pay.PaymentInfo">
+        <result column="payment_id" property="payment_id" jdbcType="INTEGER"></result>
+        <result column="payment_sn" property="payment_sn" jdbcType="VARCHAR"></result>
+        <result column="payment_type" property="payment_type" jdbcType="VARCHAR"></result>
+        <result column="payment_reason" property="payment_reason" jdbcType="VARCHAR"></result>
+        <result column="payment_count" property="payment_count" jdbcType="VARCHAR"></result>
+        <result column="receive_count" property="receive_count" jdbcType="VARCHAR"></result>
+        <result column="user_id" property="user_id" jdbcType="INTEGER"></result>
+        <result column="payment_fee" property="payment_fee" jdbcType="INTEGER"></result>
+        <result column="payment_status" property="payment_status" jdbcType="INTEGER"></result>
+        <result column="payment_memo" property="payment_memo" jdbcType="VARCHAR"></result>
+        <result column="time_crt" property="time_crt" jdbcType="TIMESTAMP"></result>
+    </resultMap>
+    <select id="getLockedPayment" resultMap="paymentResult">
+        select * from my_payment where payment_status= 0
+    </select>
+    <select id="getPaymentByID" resultMap="paymentResult">
+        select * from my_payment where payment_id= #{paymentid}
+    </select>
+    <select id="getPaymentByTenant" resultMap="paymentResult">
+        select * from my_payment where payment_count= #{openid}
+    </select>
+    <update id="updatePaymentStatus" parameterType="com.xd.pre.modules.pay.dto.PaymentUptParam" >
+
+        update my_payment
+        <set >
+            payment_status  = #{payparam.payment_status,jdbcType=INTEGER}
+        </set>
+        where  payment_id = #{payparam.payment_id,jdbcType=VARCHAR}
+
+    </update>
+    <insert id="createNewPayment" parameterType="com.xd.pre.modules.pay.PaymentInfo">
+        insert into my_payment (payment_id,payment_sn,payment_type,payment_reason,payment_count,
+                                  receive_count,user_id,payment_fee,payment_status,
+                                  payment_memo,time_crt)
+                            values (#{pay.payment_id},#{pay.payment_sn},#{pay.payment_type},#{pay.payment_reason},
+                                    #{pay.payment_count},#{pay.receive_count},#{pay.user_id},
+                                    #{pay.payment_fee},#{pay.payment_status},#{pay.payment_memo},
+                                    #{pay.time_crt,jdbcType=TIMESTAMP})
+     </insert>
+</mapper>

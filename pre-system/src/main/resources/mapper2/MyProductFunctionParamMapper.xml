@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xd.pre.modules.myeletric.mapper.MyProductFunctionParamMapper">
+    <resultMap id="ProductFunctionParamInfo" type="com.xd.pre.modules.myeletric.domain.MyProductFunctionParamInfo">
+        <result column="product_name" property="product_name" jdbcType="VARCHAR"></result>
+        <result column="function_name" property="function_name" jdbcType="VARCHAR"></result>
+        <result column="param_name" property="param_name" jdbcType="VARCHAR"></result>
+        <result column="param_type" property="param_type" jdbcType="INTEGER"></result>
+        <result column="param_dec" property="param_dec" jdbcType="VARCHAR"></result>
+        <result column="param_direction" property="param_direction" jdbcType="INTEGER"></result>
+        <result column="upt_tick" property="upt_tick" jdbcType="INTEGER"></result>
+    </resultMap>
+    <select id="getProductFunctionParam" resultMap="ProductFunctionParamInfo" parameterType="com.xd.pre.modules.myeletric.dto.MyProductFunctionParamQry">
+        select * from product_function_param where product_name=#{queryParam.product_name} and function_name=#{queryParam.function_name}
+    </select>
+</mapper>

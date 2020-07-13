@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xd.pre.modules.myeletric.mapper.MyTenantHisMapper">
+    <resultMap id="tenantHisResult" type="com.xd.pre.modules.myeletric.domain.MyTenantHis">
+        <result column="room_id" property="room_id" jdbcType="INTEGER"></result>
+        <result column="room_tenant_id" property="room_tenant_id" jdbcType="VARCHAR"></result>
+        <result column="tenant_name" property="tenant_name" jdbcType="VARCHAR"></result>
+        <result column="tenant_tel" property="tenant_tel" jdbcType="VARCHAR"></result>
+        <result column="tenant_contactor" property="tenant_contactor" jdbcType="VARCHAR"></result>
+        <result column="tenant_openid" property="tenant_openid" jdbcType="VARCHAR"></result>
+        <result column="tenant_time" property="tenant_time" jdbcType="TIMESTAMP"></result>
+        <result column="crt_time" property="crt_time" jdbcType="TIMESTAMP"></result>
+        <result column="end_time" property="end_time" jdbcType="TIMESTAMP"></result>
+    </resultMap>
+    <select id="getTenantHisByAreaID" resultMap="tenantHisResult">
+        select * from my_tenant_his where room_id  in (select room_id from my_room where area_id = #{areaid})
+    </select>
+    <update id="updateTenantHis" parameterType="com.xd.pre.modules.myeletric.dto.MyTenantHisDto">
+        update my_tenant_his
+        <set>
+            end_time = #{tenantHis.end_time},
+        </set>
+        where room_tenant_id = #{tenantHis.room_tenant_id}
+    </update>
+    <insert id="saveTenantHis" parameterType="com.xd.pre.modules.myeletric.dto.MyTenantHisDto">
+        insert into my_tenant_his (room_id,room_tenant_id,tenant_name,tenant_tel,tenant_contactor,tenant_openid,tenant_time,crt_time,end_time)
+        values (#{tenantHis.room_id},#{tenantHis.room_tenant_id},#{tenantHis.tenant_name},#{tenantHis.tenant_tel},#{tenantHis.tenant_contactor},#{tenantHis.tenant_openid},#{tenantHis.tenant_time,jdbcType=TIMESTAMP},#{tenantHis.crt_time,jdbcType=TIMESTAMP},now())
+    </insert>
+</mapper>

@@ -3,8 +3,12 @@ package com.xd.pre.modules.myeletric.controller;
 
 import com.xd.pre.common.utils.R;
 import com.xd.pre.log.annotation.SysOperaLog;
+import com.xd.pre.modules.myeletric.device.production.IDevice;
+import com.xd.pre.modules.myeletric.device.production.ProductionContainer;
 import com.xd.pre.modules.myeletric.domain.*;
+import com.xd.pre.modules.myeletric.dto.MyMeterBasePriceDto;
 import com.xd.pre.modules.myeletric.dto.MyMeterFilter;
+import com.xd.pre.modules.myeletric.dto.MyWMeterBasePriceDto;
 import com.xd.pre.modules.myeletric.service.*;
 import com.xd.pre.modules.myeletric.vo.MyMeterVo;
 import com.xd.pre.modules.myeletric.vo.MyWMeterVo;
@@ -36,6 +40,47 @@ public class MyWMeterController {
     @Autowired
     private StringRedisTemplate redisTemplate;
 
+    //提取园区所有的水表
+    @PreAuthorize("hasAuthority('sys:room:view')")
+    @SysOperaLog(descrption = "获取园区的水表清单")
+    @RequestMapping(value = "/getareawmeters", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+    public R getAreaMeterList(MyMeterFilter filter) {
+
+
+        //读取所有的水表配置数据，然后从Redis中读取当前读数，然后返回给前端
+        List<MyWMeterVo> listOut = new ArrayList<MyWMeterVo>();
+        List<MyRoom> lstRoom = iRoomService.getRoomInfo(filter.getArea_id());
+        int nRoomCount = lstRoom.size();
+        List<MyWMeter> list=iMyWMeterService.getAreaWMeterList(filter.getArea_id());
+
+        for(int i = 0; i< list.size(); i++)
+        {
+
+            MyWMeter meter = list.get(i);
+            if (null == meter)
+            {
+                continue;
+            }
+            MyWMeterVo item = new MyWMeterVo(meter);
+            for(int j = 0; j < nRoomCount;j++)
+            {
+                MyRoom room = lstRoom.get(j);
+                if (null != room && room.getRoom_id() == meter.getRoom_id())
+                {
+                    item.setRoom_name(room.getRoom_name());
+                }
+            }
+
+
+
+            //通过Device获取实时数据
+            ProductionContainer.getTheMeterDeviceContainer().FetchMeterWater(item);
+
+            listOut.add(item);
+        }
+
+        return R.ok(listOut);
+    }
 
 
     @PreAuthorize("hasAuthority('sys:room:view')")
@@ -46,34 +91,22 @@ public class MyWMeterController {
         //读取所有的电表配置数据，然后从Redis中读取当前读数，然后返回给前端
         List<MyWMeterVo> listOut = new ArrayList<MyWMeterVo>();
         List<MyWMeter> list=iMyWMeterService.getMeterList(filter.getRoom_id());
-        list.forEach(e->{
-
-            MyWMeterVo item = new MyWMeterVo(e);
-
-            String sKey = "WMeter"+String.format("%06d",item.getMeter_id());
-            if (redisTemplate.hasKey(sKey))
+        for(int i = 0; i < list.size(); i++)
+        {
+            MyWMeter meter = list.get(i);
+            if (null == meter)
             {
-                try
-                {
-                    String sValue= (String)redisTemplate.opsForHash().get(sKey,"TotalWater");
-                    double dValue = Double.valueOf(sValue);
-                    dValue /= 100.0f;
-                    item.setM_cur_water(dValue);
-
-                    //数据刷新的Tick
-                    String sTick = (String)redisTemplate.opsForHash().get(sKey,"FreshTick");
-                    item.setMeter_fresh_tick(Integer.parseInt(sTick));
-                }
-                catch (Exception ex)
-                {
-
-                }
+                continue;
             }
 
+            MyWMeterVo item = new MyWMeterVo(meter);
+
+            //通过Device获取实时数据
+            ProductionContainer.getTheMeterDeviceContainer().FetchMeterWater(item);
 
             listOut.add(item);
-        });
 
+        }
 
         return R.ok(listOut);
     }
@@ -200,5 +233,53 @@ public class MyWMeterController {
             //判断表释放存在
             return R.error("解除绑定失败");
         }
+    }
+
+    @PreAuthorize("hasAuthority('sys:room:view')")
+    @SysOperaLog(descrption = "设置水表期初值和水价")
+    @RequestMapping(value = "/setwmeterbaseprice", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+    public R setwmeterbaseprice(MyWMeterBasePriceDto wmeterbaseprice) {
+
+        PreSecurityUser user = SecurityUtil.getUser();
+        if(user == null)
+        {
+            return R.error("权限验证错误，请重新登录!");
+        }
+
+        if (null == wmeterbaseprice)
+        {
+            return R.error("设置用水单价和期初值请求参数错误");
+        }
+
+        //判断该水表是否为该业主所属，不是则报告该水表业主无权设置电价
+        MyUserWMeter userMeter = iMyUserWMeterService.getUserMeterByMeterid(wmeterbaseprice.getMeter_id());
+        if (null == userMeter || userMeter.getUser_id() != user.getUserId())
+        {
+            return R.error("该水表属于其他业主，您无权设置!");
+        }
+
+        //修改电表的参数
+        Integer ret = 0;
+        try {
+
+            ret = iMyWMeterService.updateWMeter(wmeterbaseprice);
+        }
+        catch (Exception ex)
+        {
+            String sErr = ex.getMessage();
+            String fdf = "";
+        }
+
+        if (ret == 1)
+        {
+            //判断表释放存在
+            return R.ok("设置成功");
+        }
+        else
+        {
+            //判断表释放存在
+            return R.error("设置失败");
+        }
+
     }
 }

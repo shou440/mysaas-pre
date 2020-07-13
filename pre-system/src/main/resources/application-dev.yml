@@ -49,6 +49,25 @@ pre:
       - my_wmeter
       - my_map_user_meter
       - my_map_user_wmeter
+      - my_room_tenant
+      - my_tenant_his
+      - my_meter_record
+      - my_meter_fee
+      - my_wmeter_record
+      - my_wmeter_fee
+      - pre_meter
+      - my_product
+      - product_property
+      - product_signal
+      - product_event
+      - product_function
+      - product_function_param
+      - product_device
+      - property_record
+      - my_channel
+      - my_channel_mqtt
+      - my_payment
+      - my_payment_detail_wx
     tenantIdColumn: tenant_id
   url:
     address: http://localhost:9528
@@ -62,13 +81,13 @@ server:
     worker-threads: 20
 spring:
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    driver-class-name: com.mysql.jdbc.Driver
     hikari:
       connection-test-query: SELECT 1
       max-lifetime: 30000
       maximum-pool-size: 10
       minimum-idle: 3
-    password:
+    password: my3332361
     type: com.zaxxer.hikari.HikariDataSource
     url: jdbc:mysql://localhost:3306/saas?useUnicode=true&zeroDateTimeBehavior=convertToNull&characterEncoding=UTF-8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=Asia/Shanghai
     username: root
