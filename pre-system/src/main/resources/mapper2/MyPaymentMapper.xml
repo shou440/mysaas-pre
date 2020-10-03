@@ -4,11 +4,13 @@
 <mapper namespace="com.xd.pre.modules.pay.mapper.MyPaymentMapper">
     <resultMap id="paymentResult" type="com.xd.pre.modules.pay.PaymentInfo">
         <result column="payment_id" property="payment_id" jdbcType="INTEGER"></result>
-        <result column="payment_sn" property="payment_sn" jdbcType="VARCHAR"></result>
+        <result column="promotion_id" property="promotion_id" jdbcType="VARCHAR"></result>
         <result column="payment_type" property="payment_type" jdbcType="VARCHAR"></result>
         <result column="payment_reason" property="payment_reason" jdbcType="VARCHAR"></result>
         <result column="payment_count" property="payment_count" jdbcType="VARCHAR"></result>
         <result column="receive_count" property="receive_count" jdbcType="VARCHAR"></result>
+        <result column="room_name" property="room_name" jdbcType="VARCHAR"></result>
+        <result column="tenant_name" property="tenant_name" jdbcType="VARCHAR"></result>
         <result column="user_id" property="user_id" jdbcType="INTEGER"></result>
         <result column="payment_fee" property="payment_fee" jdbcType="INTEGER"></result>
         <result column="payment_status" property="payment_status" jdbcType="INTEGER"></result>
@@ -34,11 +36,12 @@
 
     </update>
     <insert id="createNewPayment" parameterType="com.xd.pre.modules.pay.PaymentInfo">
-        insert into my_payment (payment_id,payment_sn,payment_type,payment_reason,payment_count,
-                                  receive_count,user_id,payment_fee,payment_status,
+        insert into my_payment (payment_id,promotion_id,payment_type,payment_reason,payment_count,
+                                  receive_count,room_name,tenant_name,user_id,payment_fee,payment_status,
                                   payment_memo,time_crt)
-                            values (#{pay.payment_id},#{pay.payment_sn},#{pay.payment_type},#{pay.payment_reason},
-                                    #{pay.payment_count},#{pay.receive_count},#{pay.user_id},
+                            values (#{pay.payment_id},#{pay.promotion_id},#{pay.payment_type},#{pay.payment_reason},
+                                    #{pay.payment_count},#{pay.receive_count},
+                                    #{pay.room_name},#{pay.tenant_name},#{pay.user_id},
                                     #{pay.payment_fee},#{pay.payment_status},#{pay.payment_memo},
                                     #{pay.time_crt,jdbcType=TIMESTAMP})
      </insert>

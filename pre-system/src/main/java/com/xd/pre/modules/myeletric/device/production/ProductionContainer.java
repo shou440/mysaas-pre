@@ -428,28 +428,21 @@ public class ProductionContainer implements Runnable {
             return null;
         }
 
-        IProduct product = null;
-        switch (productInfo.getProduct_type())
-        {
-            case IProduct.PRODUCT_TYPE_P2P:
-                case IProduct.PRODUCT_TYPE_GATEWAY:
-            {
-                product = new MyProduct(productInfo);
-                CreateProductProperty(product);
-                CreateProductSignal(product);
-                CreateFunction(product);
-                CreateProductEvent(product);
-                AddProduct(product);
+        IProduct product = new MyProduct(productInfo);
+        CreateProductProperty(product);
+        CreateProductSignal(product);
+        CreateFunction(product);
+        CreateProductEvent(product);
+        AddProduct(product);
+        LoadDevice(product);
 
-                LoadDevice(product);
-                break;
-            }
-        }
+        //创建数据网关设备
+        product.CreateGatewayGather();
 
         return product;
     }
 
-    //装载所有的设备
+    //装载产品所有的设备
     private void LoadDevice(IProduct product)
     {
         if(null == product)
@@ -458,23 +451,19 @@ public class ProductionContainer implements Runnable {
         }
 
         List<MyProductDeviceInfo> lst = deviceMapper.getProductDevice(product.getProduct_name());
-        lst.forEach(e->{
-
-            product.AddDevice(e);
-
-        });
-    }
-
-    //添加设备到映射表
-    public void AddDeviceToMap(IDevice device)
-    {
-        if (null == device)
+        int nLen = lst.size();
+        for(int i = 0; i < nLen; i++)
         {
-            return;
+            MyProductDeviceInfo deviceInfo = lst.get(i);
+            if (null != deviceInfo)
+            {
+                product.AddDevice(deviceInfo);
+            }
         }
 
-        map_device.put(device.getDeviceName(),device);
     }
+
+
 
     //装载产品
     private void LoadProduct()
@@ -491,6 +480,17 @@ public class ProductionContainer implements Runnable {
         });
     }
 
+    //添加设备到映射表
+    public void AddDeviceToMap(IDevice device)
+    {
+        if (null == device)
+        {
+            return;
+        }
+
+        map_device.put(device.getDeviceName(),device);
+    }
+
     //注册数据采集器
     public  void RegisteGather(IDeviceGather gather)
     {
@@ -499,7 +499,7 @@ public class ProductionContainer implements Runnable {
             return;
         }
 
-        IDevice device = gather.getDevice();
+        IDevice device = gather.getGateWayDevice();
         if (null == device)
         {
             return;
@@ -530,7 +530,7 @@ public class ProductionContainer implements Runnable {
                 gather = lst_gather.get(i);
                 if (null != gather)
                 {
-                    IDevice device = gather.getDevice();
+                    IDevice device = gather.getGateWayDevice();
                     if (null != device && device.getGatewayName().equals(gatherName))
                     {
                         return gather;
@@ -554,13 +554,12 @@ public class ProductionContainer implements Runnable {
         {
             return;
         }
-        IDevice gatherDevice = gather.getDevice();
+        IDevice gatherDevice = gather.getGateWayDevice();
         if (null == gatherDevice)
         {
             return;
         }
         String gatherName = gatherDevice.getDeviceName();
-
 
         int nCount = lst_Product.size();
         for(int i = 0; i < nCount; i++)
@@ -605,11 +604,8 @@ public class ProductionContainer implements Runnable {
 
         has_started  =true;
 
-
         //从数据库中装载产品
         LoadProduct();
-
-
 
         //启动工作线程
         isWorking = true;
@@ -644,6 +640,26 @@ public class ProductionContainer implements Runnable {
 
             }
 
+            //调用每个Device的网络检测
+            int nLen = lst_Product.size();
+            for(int i = 0; i < nLen; i++)
+            {
+                IProduct product = lst_Product.get(i);
+                if (null == product)
+                {
+                    List<IDevice> lstDevice  = product.getAllDevice();
+                    int nDeviceCount = lstDevice.size();
+                    for( int j = 0; j < nDeviceCount; j++)
+                    {
+                        IDevice device = lstDevice.get(j);
+                        if (null != device)
+                        {
+                            device.OnLineCheck();
+                        }
+                    }
+                }
+            }
+
             //提取新注册的数据采集器队列，加入通道中和队列中
             while(registe_gather_queue.size() > 0)
             {
@@ -652,11 +668,11 @@ public class ProductionContainer implements Runnable {
                 {
                     try
                     {
-                        //添加子设备
+                        //装载物联网关设备的所有子设备
                         LoadGatherSubDevice(newGather);
 
-                        //挂接到通道中
-                        IDevice device = newGather.getDevice();
+                        //将物联网关设备挂接到通讯通道下
+                        IDevice device = newGather.getGateWayDevice();
                         if (null != device)
                         {
                             IMyChannel channel = ChannelContainer.getChannelContainer().getChannel(device.getChannelName());

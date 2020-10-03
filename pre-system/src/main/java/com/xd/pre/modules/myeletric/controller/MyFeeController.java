@@ -36,6 +36,7 @@ public class MyFeeController {
     @Autowired
     private MyMeterFeeMapper MeterFeemapper;
 
+
     @PreAuthorize("hasAuthority('sys:room:view')")
     @SysOperaLog(descrption = "查询电费")
     @RequestMapping(value = "/getmeterfee", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
@@ -67,6 +68,8 @@ public class MyFeeController {
         }
         return R.ok(meterFeeLst);
     }
+
+
 
     @PreAuthorize("hasAuthority('sys:room:view')")
     @SysOperaLog(descrption = "更新电费收费单的状态")
@@ -180,6 +183,38 @@ public class MyFeeController {
     @SysOperaLog(descrption = "查询水费")
     @RequestMapping(value = "/getwaterfee", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
     public R getWaterFee(MyMeterFeeQueryDto queryParam) {
+
+        //读取所有的电表配置数据，然后从Redis中读取当前读数，然后返回给前端
+        if (null == queryParam)
+        {
+            return R.error("水费查询输入参数错误!");
+        }
+
+        //查询水表
+        List<MyWaterFee> waterFeeLst = null;
+        if (queryParam.getMeter_id() != null && queryParam.getMeter_id() !=0 )
+        {
+            waterFeeLst  = iWaterFeeService.getWaterFeeByMeter(queryParam);
+        }
+        else if (queryParam.getRoom_id() != null && queryParam.getRoom_id() !=0 )
+        {
+            waterFeeLst  = iWaterFeeService.getWaterFeeByRoom(queryParam);
+        }
+        else if (queryParam.getArea_id() != null && queryParam.getArea_id() !=0 )
+        {
+            waterFeeLst  = iWaterFeeService.getWaterFeeByArea(queryParam);
+        }
+        else
+        {
+            return R.error("查询水费输入参数错误!");
+        }
+        return R.ok(waterFeeLst);
+    }
+
+    @PreAuthorize("hasAuthority('sys:room:view')")
+    @SysOperaLog(descrption = "结算费单或者充值单")
+    @RequestMapping(value = "/paypromotion", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+    public R payPromotion(MyMeterFeeQueryDto queryParam) {
 
         //读取所有的电表配置数据，然后从Redis中读取当前读数，然后返回给前端
         if (null == queryParam)

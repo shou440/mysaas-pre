@@ -16,8 +16,6 @@ public interface IMyChannel {
     //接收数据回调函数
     void OnReceive(Object data);
 
-
-
     //启动通道
     boolean startChannel();
 

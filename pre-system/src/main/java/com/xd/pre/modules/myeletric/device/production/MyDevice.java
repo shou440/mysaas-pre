@@ -1,7 +1,8 @@
 package com.xd.pre.modules.myeletric.device.production;
 
-import com.xd.pre.modules.myeletric.device.gather.IDeviceGather;
-import com.xd.pre.modules.myeletric.device.gather.MyMqttMeterGather;
+import com.xd.pre.common.utils.CommonFun;
+import com.xd.pre.modules.myeletric.device.command.IMyCommand;
+import com.xd.pre.modules.myeletric.device.gather.*;
 import com.xd.pre.modules.myeletric.domain.MyProductDeviceInfo;
 
 import java.util.ArrayList;
@@ -13,21 +14,21 @@ public class MyDevice implements IDevice {
     /*******************************************************************************************************************
                         基本属性
      *******************************************************************************************************************/
-    String     product_name="";
-    String     dev_group="";                    //设备分组
-    int        dev_type = IDevice.DEVICE_TYPE_SUBDEVICE;
-    String     device_name="";
-    String     device_key="";
-    int        sub_index=0;
-    int        device_no=0;
-    String     gateway_channel = "";
-    String     device_gateway = "";
-    String     device_version="Ver_0.0.0";
-    boolean    is_online=false;
-    int       online_tick =0;
-    String    device_dec = "";
-    IDeviceGather gather = null;
-    IProduct  device_product = null;
+    protected String            product_name="";
+    protected String             dev_group="";                    //设备分组
+    protected int                dev_type = IDevice.DEVICE_TYPE_SUBDEVICE;
+    protected String             device_name="";
+    protected String             device_key="";
+    protected int                device_no=0;
+    protected String             gateway_channel = "";
+    protected String             device_gateway = "";
+    protected String             device_version="Ver_0.0.0";
+    protected String             device_dec = "";
+    protected IDeviceGather      gather = null;
+    protected IProduct           device_product = null;
+    protected int                last_registe_tick = 0;      //最近一次网络注册的时间
+    protected boolean            is_online=false;
+    protected int                online_expire=600;          //默认10分钟掉线
 
 
     //属性列表
@@ -41,9 +42,6 @@ public class MyDevice implements IDevice {
 
     //事件列表
     List<MyProductEvent> lst_event = new ArrayList<MyProductEvent>();
-
-
-
 
     @Override
     public String getProductName() {
@@ -97,16 +95,6 @@ public class MyDevice implements IDevice {
     }
 
     @Override
-    public int getSubIndex() {
-        return sub_index;
-    }
-
-    @Override
-    public void setSubIndex(int index) {
-        sub_index = index;
-    }
-
-    @Override
     public int getDevNO() {
         return device_no;
     }
@@ -126,24 +114,51 @@ public class MyDevice implements IDevice {
         device_version = version;
     }
 
-    @Override
-    public void setOnline(boolean online) {
-        is_online = online;
-    }
+
+
 
     @Override
-    public boolean isOnline() {
+    public boolean IsBusy() {
+
+        IDeviceGather gather = getGather();
+        if (null == gather)
+        {
+            return false;
+        }
+        return gather.isBusy();
+    }
+
+    //在线标志
+    @Override
+    public boolean IsOnline() {
         return is_online;
     }
 
+    //最近一次注册上线的时间
     @Override
-    public int getOnlineTick() {
-        return online_tick;
+    public int LastRegistTick() {
+        return last_registe_tick;
     }
 
+    //注册网络信号
     @Override
-    public void setOnlineTick(int nTick) {
-        online_tick = nTick;
+    public void OnLineRegiste() {
+
+        last_registe_tick = CommonFun.GetTick();
+        is_online = true;
+
+    }
+
+    //设备网络信号检测回调函数
+    @Override
+    public void OnLineCheck() {
+
+        int nGap = CommonFun.GetTick() - last_registe_tick;
+        if (nGap > online_expire)
+        {
+            is_online = false;
+        }
+
     }
 
     @Override
@@ -245,25 +260,18 @@ public class MyDevice implements IDevice {
     @Override
     public IProductSignal getSignal(String sSignalName) {
 
-        List<IProductSignal> signalLst = new ArrayList<IProductSignal>();
 
-        lst_signal.forEach(e-> {
-
-            if (null != e && e.getSignalName() == sSignalName)
+        int nLen = lst_signal.size();
+        for(int i = 0; i < nLen; i++)
+        {
+            IProductSignal signal = lst_signal.get(i);
+            if (null != signal && signal.getSignalName().equals(sSignalName))
             {
-                signalLst.add(e);
-                return;
+                return  signal;
             }
-        });
+        }
 
-        if (signalLst.size() >= 1)
-        {
-            return signalLst.get(0);
-        }
-        else
-        {
-            return null;
-        }
+        return  null;
     }
 
     @Override
@@ -306,6 +314,17 @@ public class MyDevice implements IDevice {
     }
 
     @Override
+    public void setEvents(List<MyProductEvent> events) {
+        lst_event = events;
+    }
+
+    //创建设备，根据产品种类不通构建过程不同(包含三类P2P直连设备、网关设备、网关子设备)
+    @Override
+    public boolean CreateDevice() {
+        return false;
+    }
+
+    @Override
     public IDeviceGather getGather() {
         return gather;
     }
@@ -313,7 +332,7 @@ public class MyDevice implements IDevice {
 
     //创建设备数据采集器
     @Override
-    public boolean CreateGather() {
+    public IDeviceGather CreateGather() {
 
         //判断设备是否为网关设备，网关设备则创建网关数据采集器
         if (getDeviceType() == IDevice.DEVICE_TYPE_GATEWAY)
@@ -321,21 +340,63 @@ public class MyDevice implements IDevice {
             if (getProductName().equals("MYGW-100") )
             {
                 gather = new MyMqttMeterGather(this);
-                return true;
+
+                return gather;
             }
         }
 
-        return false;
+        return null;
     }
 
+    //创建网关子设备
     @Override
-    public boolean IsOnline() {
-        return is_online;
+    public IMyMqttSubDevice CreateSubDevice() {
+
+        if (null == device_product || device_product.getProduct_type() != MyProduct.PRODUCT_TYPE_SUBDEVICE)
+        {
+            return null;
+        }
+
+
+        if (device_product.getProduct_name().equals("MY610-ENB"))
+        {
+            IDeviceGather gather = ProductionContainer.getTheMeterDeviceContainer().getGather(getGatewayName());
+            if (null == gather)
+            {
+                return null;
+            }
+            IMyMqttSubDevice subDevice = new My610ESubDevice(this,gather);
+            return subDevice;
+        }
+        else if (device_product.getProduct_name().equals("MY630-ENB"))
+        {
+            IDeviceGather gather = ProductionContainer.getTheMeterDeviceContainer().getGather(getGatewayName());
+            if (null == gather)
+            {
+                return null;
+            }
+            IMyMqttSubDevice subDevice = new My630ESubDevice(this,gather);
+            return subDevice;
+        }
+        return null;
     }
 
+
+
+
+
+    //设备插入命令
     @Override
-    public int onlineCheckTick() {
-        return online_tick;
+    public void onCommand(IMyCommand command) {
+
+
+        //提取网关设备，将命令缓存到网关设备中
+        IDeviceGather gather = ProductionContainer.getTheMeterDeviceContainer().getGather(getGatewayName());
+        if (null != gather)
+        {
+            gather.onCommand(command);
+
+        }
     }
 
 
@@ -355,9 +416,8 @@ public class MyDevice implements IDevice {
         dev_group = info.getDevice_group();
         dev_type = info.getDevice_type();
 
-        device_dec = info.getDevice_dec();
+        device_dec = info.getDevice_memo();
         device_key = info.getDevice_key();
-        sub_index = info.getSub_index();
         device_no = info.getDevice_no();
         device_gateway = info.getGateway_name();
         gateway_channel = info.getGateway_channel();

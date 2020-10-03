@@ -9,4 +9,7 @@ public interface IRedisBufferItem {
 
      void setValue(Object obj);
      Object getValue();
+
+     int getExipreSeconds();
+     boolean isPeristen();
 }

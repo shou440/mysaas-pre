@@ -143,7 +143,7 @@ public class ChannelContainer {
         {
             channel = new MyMqttChannel(mqttChannelInfo);
         }
-        else if (channelInfo.getChannel_type().equals("bjhy"))   //背景慧怡
+        else if (channelInfo.getChannel_type().equals("bjhy"))   //北京慧怡
         {
             channel = new WMeterUDPChannel(channelInfo);
         }

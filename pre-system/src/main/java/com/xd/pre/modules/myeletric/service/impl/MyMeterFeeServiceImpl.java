@@ -200,8 +200,10 @@ public class MyMeterFeeServiceImpl extends ServiceImpl<MyMeterFeeMapper, MyMeter
         //判断是否为预付费的表，如果是则不生成计费单
         if (null == meter || ProductionContainer.getTheMeterDeviceContainer().IsPrechargeDevice(meter.getMeter_type()))
         {
-            return 0;
+          //  return 0;
         }
+
+
 
         List<MyMeterRecord> rdLst = myMeterService.getEpRecord(qrParam);
         MyMeterRecord minRd = null;
@@ -263,7 +265,7 @@ public class MyMeterFeeServiceImpl extends ServiceImpl<MyMeterFeeMapper, MyMeter
         meterFee.setTotal_fee(meterFee.getEp_price()*meterFee.getEp_used());
 
         meterFee.setFee_status(0);                 //设置未支付标志
-        meterFee.setPayment_id(0);
+        meterFee.setPayment_id("");
         meterFee.setTime_crt(new Timestamp(System.currentTimeMillis()));
         meterFee.setTime_upt(new Timestamp(System.currentTimeMillis()));
 

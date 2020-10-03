@@ -19,24 +19,11 @@
  */
 package org.weixin4j;
 
+import org.weixin4j.component.*;
 import org.weixin4j.model.base.Token;
 import java.util.HashMap;
 import java.util.Map;
-import org.weixin4j.component.AbstractComponent;
-import org.weixin4j.component.BaseComponent;
-import org.weixin4j.component.FileComponent;
-import org.weixin4j.component.GroupsComponent;
-import org.weixin4j.component.JsSdkComponent;
-import org.weixin4j.component.MaterialComponent;
-import org.weixin4j.component.MediaComponent;
-import org.weixin4j.component.MenuComponent;
-import org.weixin4j.component.MessageComponent;
-import org.weixin4j.component.PayComponent;
-import org.weixin4j.component.QrcodeComponent;
-import org.weixin4j.component.RedpackComponent;
-import org.weixin4j.component.SnsComponent;
-import org.weixin4j.component.TagsComponent;
-import org.weixin4j.component.UserComponent;
+
 import org.weixin4j.loader.DefaultTokenLoader;
 import org.weixin4j.loader.DefaultTicketLoader;
 import org.weixin4j.loader.ITokenLoader;
@@ -188,7 +175,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
                 if (token == null) {
                     token = base().token();
                     tokenLoader.refresh(token);
-                }
+            }
             }
         }
         return token;
@@ -362,6 +349,16 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
             return (QrcodeComponent) components.get(key);
         }
         QrcodeComponent component = new QrcodeComponent(this);
+        components.put(key, component);
+        return component;
+    }
+
+    public PromotionComponect promotion() {
+        String key = PromotionComponect.class.getName();
+        if (components.containsKey(key)) {
+            return (PromotionComponect) components.get(key);
+        }
+        PromotionComponect component = new PromotionComponect(this);
         components.put(key, component);
         return component;
     }

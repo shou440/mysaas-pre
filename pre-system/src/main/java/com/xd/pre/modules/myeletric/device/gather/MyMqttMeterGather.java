@@ -7,9 +7,11 @@ import com.xd.pre.common.utils.CommonFun;
 import com.xd.pre.modules.myeletric.device.channel.ChannelContainer;
 import com.xd.pre.modules.myeletric.device.channel.IMyChannel;
 import com.xd.pre.modules.myeletric.device.command.IMyCommand;
+import com.xd.pre.modules.myeletric.device.command.MyCommandMessage;
 import com.xd.pre.modules.myeletric.device.production.IDevice;
 import com.xd.pre.modules.myeletric.device.production.IProduct;
 import com.xd.pre.modules.myeletric.device.production.IProductProperty;
+import org.aspectj.bridge.ICommand;
 import org.joda.time.DateTime;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -17,87 +19,37 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class MyMqttMeterGather implements IDeviceGather {
+public class MyMqttMeterGather extends GatewayGather {
 
     private final static int STATE_INIT       = 0x00;
     private final static int STATE_IDEL       = 0x01;
     private final static int STATE_INSERT     = 0x02;
     private final static int STATE_CALLDATA    = 0x03;
 
-    private  int last_callall_tick = 0;
-    private  int m_nRetryTimes = 0;
-    private  int gather_state = STATE_INIT;
-    private  String gather_name = "";
-    private  DateTime time_last_callall = DateTime.now();
-
-    private IMyMqttSubDevice cur_sub_device = null;
-
-    //设备存根
-    private IDevice meter_device = null;
-
-    //当前命令
-    private IMyCommand cur_command = null;
-
-    //上一次发送的时间
-    private int        last_send_tick = 0;
-
-    //子设备列表
-    private List<IMyMqttSubDevice> lst_subdevice = new ArrayList<IMyMqttSubDevice>();
-
-    //数据轮询队列
-    private LinkedBlockingQueue<IMyMqttSubDevice> queue_callall = new LinkedBlockingQueue<IMyMqttSubDevice>();
-
-    //设备命令
-    private LinkedBlockingQueue<IMyCommand> queue_command = new LinkedBlockingQueue<IMyCommand>();
-
-    //挂新的子设备
-    private LinkedBlockingQueue<IDevice> queue_new_subdevice = new LinkedBlockingQueue<IDevice>();
-
-    //接收到的Mqtt数据
-    private LinkedBlockingQueue<DeviceMqttMsg> queue_rec_msg = new LinkedBlockingQueue<DeviceMqttMsg>();
+    /*******************************************************************************************************************************************************
+     *                 数据定义
+     *
+     *  1 gather_state,物联网关数据采集器状态机状态
+     *  2 cur_sub_device,当前正在交互的网关子设备
+     *  3 lst_subdevice,网关子设备的队列
+     *  4 queue_callall,总召唤缓冲队列
+     *  5 queue_rec_msg,数据接收缓冲
+     *  6 time_last_callall,上一次轮询数据的时间
+     ***************************************************************************************************************************************/
+    protected  int      gather_state = STATE_INIT;
+    protected  IMyMqttSubDevice cur_sub_device = null;
+    protected  List<IMyMqttSubDevice> lst_subdevice = new ArrayList<IMyMqttSubDevice>();
+    protected  LinkedBlockingQueue<IMyMqttSubDevice> queue_callall = new LinkedBlockingQueue<IMyMqttSubDevice>();
+    protected  LinkedBlockingQueue<DeviceMqttMsg> queue_rec_msg = new LinkedBlockingQueue<DeviceMqttMsg>();
 
     public MyMqttMeterGather(IDevice device)
     {
-        meter_device = device;
+        gateway_device = device;
 
     }
-
-    @Override
-    public String getName() {
-        return gather_name;
-    }
-
-    //获取数据采集器对应的通讯通道
-    @Override
-    public IMyChannel getChannel() {
-
-        if (null == meter_device)
-        {
-            return null;
-        }
-
-        String sChannel = meter_device.getChannelName();
-        IMyChannel channel = ChannelContainer.getChannelContainer().getChannel(sChannel);
-        return channel;
-    }
-
-    //绑定通讯通道
-    @Override
-    public boolean bindChannel() {
-
-        //将自己添加到通道中
-        IMyChannel channel = getChannel();
-        if (null != channel)
-        {
-            channel.addGather(this);
-        }
-
-        return false;
-    }
-
 
     //通过子站号SubIndex获取子设备
-    private IMyMqttSubDevice getSubDeviceByIndex(int nSubIndex)
+    private IMyMqttSubDevice getSubDeviceByDevNO(int nDevNO)
     {
         IMyMqttSubDevice subDevice = null;
 
@@ -105,7 +57,7 @@ public class MyMqttMeterGather implements IDeviceGather {
         {
             subDevice = lst_subdevice.get(i);
             IDevice device = subDevice.getDevice();
-            if (null != subDevice && device.getSubIndex() == nSubIndex)
+            if (null != subDevice && device.getDevNO() == nDevNO)
             {
                 return subDevice;
             }
@@ -207,6 +159,7 @@ public class MyMqttMeterGather implements IDeviceGather {
 
     private void SwitchState(int nNextState)
     {
+
         gather_state = nNextState;
 
     }
@@ -225,14 +178,28 @@ public class MyMqttMeterGather implements IDeviceGather {
             IMyCommand command = queue_command.poll();
             if (null != command)
             {
-                cur_command = command;
-                SwitchState(STATE_INSERT);
-                return;
+                IDevice device = command.getDevice();
+                if (null != device)
+                {
+                    IMyMqttSubDevice subDevice =  getSubDeviceByDevNO(device.getDevNO());
+                    if (null != subDevice)
+                    {
+                        cur_command = command;
+                        cur_sub_device = subDevice;
+                        last_send_tick = CommonFun.GetTick();
+                        cur_sub_device.SendCommand(cur_command);
+
+                        SwitchState(STATE_INSERT);
+
+                        return;
+                    }
+
+                }
             }
         }
 
+        //是否到达设备轮询时间,如果到达轮询的时间，则重新将子设备都加入轮询队列，5分钟一次
         int nGap = CommonFun.GetGap(last_callall_tick);
-        //是否到达设备轮询时间,如果到达轮询的时间，则重新将子设备都加入轮询队列
         if (nGap > 60 && queue_callall.size() == 0)
         {
             last_callall_tick = CommonFun.GetTick();
@@ -259,9 +226,11 @@ public class MyMqttMeterGather implements IDeviceGather {
                 cur_sub_device = subDevice;     //设置当前查询实时数据的设备，并重置次数和发送命令
                 m_nRetryTimes = 0;
                 cur_sub_device.SendCallQuestCmd();
-                SwitchState(STATE_CALLDATA);
                 last_send_tick = CommonFun.GetTick();
                 last_callall_tick = CommonFun.GetTick();
+
+                SwitchState(STATE_CALLDATA);
+
             }
         }
     }
@@ -280,15 +249,7 @@ public class MyMqttMeterGather implements IDeviceGather {
         if (nGap > 9)
         {
 
-            if(++m_nRetryTimes > 2 || queue_command.size() != 0)   //有插入命令则提前退出轮询
-            {
-                SwitchState(STATE_IDEL);
-            }
-            else
-            {
-                last_send_tick = CommonFun.GetTick();
-                cur_sub_device.SendCallQuestCmd();
-            }
+            SwitchState(STATE_IDEL);
         }
 
         //检查接收到的数据是否正确
@@ -299,10 +260,56 @@ public class MyMqttMeterGather implements IDeviceGather {
 
     }
 
-    //插入命令
-    private void State_Insert()
-    {
 
+
+
+    //插入命令
+    private void State_Insert(byte[] rec)
+    {
+        if (null == cur_sub_device)
+        {
+            SwitchState(STATE_IDEL);
+            return;
+        }
+
+        //判断命令执行是否超时,超时则不执行
+        if (cur_command.isExpired())
+        {
+            SwitchState(STATE_IDEL);
+        }
+
+        //判断是否超时,超时则重发，等待10秒
+        int nGap = CommonFun.GetGap(last_send_tick);
+        if (nGap > 9)
+        {
+            if(++m_nRetryTimes > 3)               //有插入命令则提前退出轮询
+            {
+                MyCommandMessage cmdMessage = new MyCommandMessage(MyCommandMessage.CMD_MSG_ABORT, "电表执行命令超时未响应");
+                if (null != cur_command)
+                {
+                    cur_command.onMessage(cmdMessage);
+                }
+
+                SwitchState(STATE_IDEL);
+            }
+            else
+            {
+                last_send_tick = CommonFun.GetTick();
+                cur_sub_device.SendCommand(cur_command);
+            }
+        }
+
+        //检查接收到的数据是否正确,正确则发送消息给命令队列
+        if (cur_sub_device.ProcessCommand(rec,cur_command))
+        {
+            MyCommandMessage cmdMessage = new MyCommandMessage(MyCommandMessage.CMD_MSG_CMPLT);
+            if (null != cur_command)    //命令执行成功
+            {
+                cur_command.onMessage(cmdMessage);
+            }
+
+            SwitchState(STATE_IDEL);
+        }
     }
 
 
@@ -313,6 +320,7 @@ public class MyMqttMeterGather implements IDeviceGather {
     }
 
 
+    //数据网关回调函数
     @Override
     public void callTick() {
 
@@ -329,9 +337,20 @@ public class MyMqttMeterGather implements IDeviceGather {
                     IDevice deviceTmp = GetSubDevice(product.getProduct_name(),device.getDeviceName());
                     if (null == deviceTmp)
                     {
+                        IMyMqttSubDevice subDevice = null;
                         if (product.getProduct_name().equals("MY610-ENB"))
                         {
-                            IMyMqttSubDevice subDevice = new My610ESubDevice(device,this);
+                            subDevice = new My610ESubDevice(device,this);
+
+                        }
+                        else if (product.getProduct_name().equals("MY630-ENB"))
+                        {
+                            subDevice = new My630ESubDevice(device,this);
+
+                        }
+
+                        //添加到子设备队列
+                        if (null != subDevice) {
                             lst_subdevice.add(subDevice);
                         }
 
@@ -357,6 +376,8 @@ public class MyMqttMeterGather implements IDeviceGather {
             }
         }
 
+        //判断是否有子设备需要校时，如果需要则进行校时
+
 
         //检查是否有插入命令，如果有则插入命令
         switch (gather_state)
@@ -376,14 +397,16 @@ public class MyMqttMeterGather implements IDeviceGather {
                 State_CallData(data);
                 break;
             }
+            case STATE_INSERT:
+            {
+                State_Insert(data);
+                break;
+            }
         }
 
     }
 
-    @Override
-    public IDevice getDevice() {
-        return meter_device;
-    }
+
 
     //添加子设备
     @Override
@@ -467,11 +490,13 @@ public class MyMqttMeterGather implements IDeviceGather {
             return;
         }
 
-        IDevice gateway = getDevice();
+
+        IDevice gateway = getGateWayDevice();
         if (null == gateway)
         {
             return;
         }
+
 
         IMyChannel channel = getChannel();
         if (null == channel)
@@ -479,10 +504,11 @@ public class MyMqttMeterGather implements IDeviceGather {
             return;
         }
 
+
+
         String sTopic = "/Gateway/Cmd/"+gateway.getDeviceName();
         MqttMsg msg = new MqttMsg(sTopic,cmd);
         channel.sendData(msg);
-
 
     }
 

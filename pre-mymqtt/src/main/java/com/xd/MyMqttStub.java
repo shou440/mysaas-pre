@@ -25,8 +25,8 @@ public class MyMqttStub {
 
 
     private static MyMqttStub sinTon = null;
-    public static final String SERVER_URL = "tcp://211.149.169.214:5009";
-    public static final String clientid  = "client4";
+    public static final String SERVER_URL = "tcp://134.175.52.44:6200";
+    public static final String clientid  = "client5";
     private MqttClient client;
     private MqttConnectOptions options;
     private String userName = "mbclient";
@@ -43,6 +43,8 @@ public class MyMqttStub {
 
     //已经启动的标志位
     private boolean has_started  = false;
+
+    private boolean is_need_ReSubcribe = false;          //是否需要重新订阅，用于重新连接后订阅消息
 
     //数据发送队列缓冲
     private static LinkedBlockingQueue<MqttMsg> queue_send = new LinkedBlockingQueue<MqttMsg>();
@@ -70,6 +72,11 @@ public class MyMqttStub {
         return  has_started;
     }
 
+    public void OnReconnected()
+    {
+        is_need_ReSubcribe = true;
+    }
+
     /*
         关闭连接
      */
@@ -93,13 +100,7 @@ public class MyMqttStub {
         }
     }
 
-    /*
-        设置
-     */
-    public void SetSubcribe(String topic)
-    {
-        lstTopic.add(topic);
-    }
+
 
     /*
         订阅消息
@@ -109,12 +110,25 @@ public class MyMqttStub {
         try
         {
             int[] Qos = {1};
-            int nLen = lstTopic.size();
-            for(int i = 0; i < nLen; i++)
-            {
-                String sTopic = lstTopic.get(i);
-                client.subscribe(sTopic,1);
-            }
+
+            client.subscribe("/client",1);
+
+
+        }
+        catch (Exception ex)
+        {
+            return ;
+        }
+    }
+
+    private void UnSubcribe()
+    {
+        try
+        {
+            int[] Qos = {1};
+
+            client.unsubscribe("/client");
+
 
         }
         catch (Exception ex)
@@ -148,19 +162,20 @@ public class MyMqttStub {
             options.setKeepAliveInterval(2000);
 
             //连接服务器
-            client.setCallback(new MyPushCallback());
+            client.setCallback(new MyMqttStubCallBack());
             client.connect(options);
 
             //设置订阅的消息
             Subcribe();
 
             //启动线程
-            System.out.print("Start MQTT Work Thread!");
+            System.out.print("Start MQTT Work Cmd Service!");
             thread_send = new Thread(new MqttSendThread());
             thread_send.start();
 
             thread_rec= new Thread(new MqttRecThread());
             thread_rec.start();
+
 
         }
         catch (Exception ex)
@@ -190,7 +205,7 @@ public class MyMqttStub {
 
     }
 
-    public void publish(int qos,boolean retained,String topic,byte[] data){
+    public void publish(String topic,byte[] data){
 
         MqttMsg msg = new MqttMsg(topic, data);
 
@@ -239,6 +254,19 @@ public class MyMqttStub {
         is_working = true;
         while(is_working)
         {
+
+            if (is_need_ReSubcribe)
+            {
+                is_need_ReSubcribe = false;
+
+                //重新订阅
+                UnSubcribe();
+
+
+                Subcribe();
+
+            }
+
             int counter = 0;
             while(queue_send.size() != 0 && ++counter < 50)
             {
@@ -279,6 +307,8 @@ public class MyMqttStub {
 
             try {
                 Thread.sleep(10);
+
+
             }
             catch (Exception ex)
             {

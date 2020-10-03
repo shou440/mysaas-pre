@@ -5,10 +5,25 @@
     <resultMap id="getUserMeterList" type="com.xd.pre.modules.myeletric.domain.MyUserMeter">
         <result column="meter_id" property="meter_id" jdbcType="INTEGER"></result>
         <result column="user_id" property="user_id" jdbcType="INTEGER"></result>
-        <result column="pay_id" property="pay_id" jdbcType="INTEGER"></result>
+        <result column="pay_id" property="pay_id" jdbcType="VARCHAR"></result>
+        <result column="crt_time" property="crt_time" jdbcType="TIMESTAMP"></result>
+        <result column="upt_time" property="upt_time" jdbcType="TIMESTAMP"></result>
     </resultMap>
     <select id="getUserMeterByMeterid" resultMap="getUserMeterList">
         select * from my_map_user_meter where meter_id=#{meterid}
     </select>
+
+    <insert id="addNewUserMeter" parameterType="com.xd.pre.modules.myeletric.domain.MyUserWMeter">
+        insert into my_map_user_meter (meter_id,
+                                       user_id,
+                                       pay_id,
+                                       crt_time,
+                                       upt_time)
+        values (#{meteruser.meter_id},
+                #{meteruser.user_id},
+                #{meteruser.pay_id},
+                #{meteruser.crt_time,jdbcType=TIMESTAMP},
+                #{meteruser.upt_time,jdbcType=TIMESTAMP})
+    </insert>
 
 </mapper>

@@ -50,6 +50,10 @@ public interface MyMeterMapper  extends BaseMapper<MyMeter> {
     //抄表记录到系统中
     public Integer recordEp(@Param("record") MyMeterRecord record);
 
+    //添加一个新的电表
+    public Integer addNewMeter(@Param("meter") MyMeter meter);
+
+
     //获取起始的用电记录
     public List<MyMeterRecord> getEpRecord(@Param("queryparam") MyMeterRdQryDto queryparam);
 

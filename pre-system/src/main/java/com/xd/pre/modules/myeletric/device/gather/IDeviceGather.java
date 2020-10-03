@@ -1,6 +1,6 @@
 package com.xd.pre.modules.myeletric.device.gather;
 
-//设备数据采集器接口
+//网关设备数据采集器
 import com.xd.pre.modules.myeletric.device.channel.IMyChannel;
 import com.xd.pre.modules.myeletric.device.command.IMyCommand;
 import com.xd.pre.modules.myeletric.device.production.IDevice;
@@ -18,8 +18,11 @@ public interface IDeviceGather {
     //采集器回调函数
     void callTick();
 
-    //获取采集器对应的设备
-    IDevice getDevice();
+    //获取数据网关的设备数据
+    IDevice getGateWayDevice();
+
+    //数据采集器是否忙
+    boolean isBusy();
 
     //挂接新的设备
     void AddNewSubDevice(IDevice device);

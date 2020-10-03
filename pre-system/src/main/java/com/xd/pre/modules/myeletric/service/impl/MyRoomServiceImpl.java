@@ -280,6 +280,7 @@ public class MyRoomServiceImpl extends ServiceImpl<MyRoomMapper,MyRoom> implemen
             return  0;
         }
 
+
         //结算房间所有电表的电费
         List<MyMeter> lstMeter = myMeterService.getMeterList(tenant.getRoom_id());
         if (null != lstMeter && lstMeter.size() > 0)

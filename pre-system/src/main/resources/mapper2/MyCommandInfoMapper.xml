@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xd.pre.modules.myeletric.mapper.MyCommandInfoMapper">
+    <resultMap id="commandResult" type="com.xd.pre.modules.myeletric.domain.MyCommandInfo">
+        <result column="product_name" property="product_name" jdbcType="VARCHAR"></result>
+        <result column="device_name" property="device_name" jdbcType="VARCHAR"></result>
+        <result column="command_sn" property="command_sn" jdbcType="INTEGER"></result>
+        <result column="user_id" property="user_id" jdbcType="INTEGER"></result>
+        <result column="start_tick" property="start_tick" jdbcType="INTEGER"></result>
+        <result column="expire_tick" property="expire_tick" jdbcType="INTEGER"></result>
+        <result column="end_tick" property="end_tick" jdbcType="INTEGER"></result>
+        <result column="result_code" property="result_code" jdbcType="INTEGER"></result>
+        <result column="err_msg" property="err_msg" jdbcType="VARCHAR"></result>
+        <result column="command_memo" property="command_memo" jdbcType="VARCHAR"></result>
+    </resultMap>
+    <select id="getMaxCommandSN" resultType="Integer">
+        select MAX(command_sn) as max_command_sn from device_command
+    </select>
+    <select id="getCommandByUserID" resultMap="commandResult" >
+        select * from device_command where user_id=#{user_id}
+    </select>
+    <select id="getCommandByDevice" resultMap="commandResult" >
+        select * from device_command where device_name=#{device_name}
+    </select>
+    <update id="updateCommandResult" parameterType="com.xd.pre.modules.myeletric.domain.MyCommandInfo" >
+        update device_command
+        <set >
+            result_code  = #{commandInfo.result_code,jdbcType=INTEGER},
+            err_msg  = #{commandInfo.err_msg,jdbcType=VARCHAR},
+        </set>
+        where command_sn = #{commandInfo.command_sn,jdbcType=INTEGER}
+
+    </update>
+    <insert id="saveCommandInfo" parameterType="com.xd.pre.modules.myeletric.domain.MyCommandInfo">
+        insert into device_command (product_name,
+                                    device_name,
+                                    command_sn,
+                                    user_id,
+                                    start_tick,
+                                    expire_tick,
+                                    end_tick,
+                                    result_code,
+                                    err_msg,
+                                    command_memo)
+                            values (#{commandInfo.product_name},
+                                    #{commandInfo.device_name},
+                                    #{commandInfo.command_sn},
+                                    #{commandInfo.user_id},
+                                    #{commandInfo.start_tick},
+                                    #{commandInfo.expire_tick},
+                                    #{commandInfo.end_tick},
+                                    #{commandInfo.result_code},
+                                    #{commandInfo.err_msg},
+                                    #{commandInfo.command_memo})
+     </insert>
+</mapper>

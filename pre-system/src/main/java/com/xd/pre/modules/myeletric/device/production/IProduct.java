@@ -11,7 +11,7 @@ public interface IProduct {
     //产品类型
     int PRODUCT_TYPE_P2P     = 0x00;         //0:直连
     int PRODUCT_TYPE_GATEWAY = 0x01;         //1:网关设备
-
+    int PRODUCT_TYPE_SUBDEVICE = 0x02;         //1:网关设备
 
     //产品名称
     String getProduct_name();
@@ -20,6 +20,10 @@ public interface IProduct {
     //产品种类
     String getProduct_class();
     void setProduct_class(String sClass);
+
+    //产品类型
+    int getProduct_type();
+    void setProduct_type(int nType);
 
     //产品描述
     String getProduct_dec();
@@ -58,6 +62,11 @@ public interface IProduct {
     boolean AddDevice(MyProductDeviceInfo info);
     List<IDevice> getAllDevice();
     IDevice getDevice(String deviceName);
+
+    //1创建P2P数据采集器、2创建数据网关采集器、3创建网关子设备数据采集器(由产品容器调用，由于子设备需要先创建
+    //   网关数据采集器然后再挂接上去，所以有先后次序
+    boolean CreateP2PGather();
+    boolean CreateGatewayGather();
 
 }
 

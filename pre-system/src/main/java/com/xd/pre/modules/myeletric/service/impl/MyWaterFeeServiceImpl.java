@@ -242,7 +242,7 @@ public class MyWaterFeeServiceImpl  extends ServiceImpl<MyWaterFeeMapper, MyWate
         waterFee.setTotal_fee(waterFee.getWater_price()*waterFee.getWater_used());
 
         waterFee.setFee_status(0);                 //设置未支付标志
-        waterFee.setPayment_id(0);
+        waterFee.setPayment_id("");
         waterFee.setTime_upt(new Timestamp(System.currentTimeMillis()));
         waterFee.setTime_crt(new Timestamp(System.currentTimeMillis()));
 

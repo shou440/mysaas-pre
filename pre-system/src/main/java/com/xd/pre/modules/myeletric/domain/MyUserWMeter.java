@@ -11,5 +11,5 @@ public class MyUserWMeter {
 
     private Integer  meter_id;
     private Integer  user_id;
-    private Integer  pay_id;
+    private String  pay_id;
 }

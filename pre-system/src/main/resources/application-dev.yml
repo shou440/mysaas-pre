@@ -68,6 +68,9 @@ pre:
       - my_channel_mqtt
       - my_payment
       - my_payment_detail_wx
+      - sys_user_count
+      - my_promotion
+      - device_command
     tenantIdColumn: tenant_id
   url:
     address: http://localhost:9528

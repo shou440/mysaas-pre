@@ -93,7 +93,10 @@ public final class Token implements Serializable {
                 return;
             }
         }
-        setExpires_in(expiresIn);
+        //setExpires_in(expiresIn);
+
+        //默认6900秒
+        setExpires_in(6900);
     }
 
     /**

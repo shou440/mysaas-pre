@@ -1,5 +1,7 @@
 package com.xd.pre.modules.myeletric.vo;
 
+import com.xd.pre.modules.myeletric.device.production.IDevice;
+import com.xd.pre.modules.myeletric.device.production.ProductionContainer;
 import com.xd.pre.modules.myeletric.domain.MyMeter;
 import lombok.Data;
 import org.joda.time.DateTime;
@@ -22,17 +24,18 @@ public class MyMeterVo {
     private float    meter_pt;
     private Integer  meter_status;
     private String   meter_dec;
-    private DateTime meter_crt_date;
-    private DateTime meter_upt_date;
+    private Timestamp meter_crt_date;
+    private Timestamp meter_upt_date;
 
     private float    ep_base;   //期初值
     private float    ep_last;   //上期读数
     private float    ep_price;  //电价
-    private  float left_ep;              //剩余电度
-    private  double cur_ep;              //当前读数
-    private  Integer meter_signal;         //通讯信号
-    private String meter_fresh_time_str;    //数据刷新的tick
-    private Integer fresh_tick;
+    private float   left_ep;              //剩余电度
+    private double  cur_ep;              //当前读数
+    private Integer meter_signal;         //通讯信号
+    private String   meter_fresh_time_str;    //数据刷新的tick
+    private Integer  fresh_tick;
+    private boolean  online_flag;         //电表是否在线
 
     public MyMeterVo(){};
 
@@ -46,7 +49,7 @@ public class MyMeterVo {
         meter_status = meter.getMeter_status();
         meter_dec = meter.getMeter_dec();
         meter_crt_date = meter.getMeter_crt_date();
-        meter_upt_date = new DateTime();
+        meter_upt_date = meter.getMeter_upt_date();
         ep_base = meter.getEp_base();
         ep_last = meter.getEp_last();
         ep_price = meter.getEp_price();
@@ -55,6 +58,15 @@ public class MyMeterVo {
         meter_fresh_time_str= "";
         fresh_tick=0;
         left_ep = 0;
+        online_flag =false;
+
+        //获取电表的Device
+        String sDeviceName = String.format("Meter%06d",meter_id);
+        IDevice device = ProductionContainer.getTheMeterDeviceContainer().getDevice(sDeviceName);
+        if (null != device)
+        {
+            online_flag =device.IsOnline();
+        }
     };
 
 

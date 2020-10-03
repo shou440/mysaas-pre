@@ -2,6 +2,7 @@ package com.xd.pre.modules.myeletric.device.production;
 
 import com.xd.pre.modules.myeletric.buffer.MySystemRedisBuffer;
 import com.xd.pre.modules.myeletric.device.gather.IDeviceGather;
+import com.xd.pre.modules.myeletric.device.gather.IMyMqttSubDevice;
 import com.xd.pre.modules.myeletric.domain.MyProductDeviceInfo;
 import com.xd.pre.modules.myeletric.domain.MyProductInfo;
 
@@ -10,23 +11,24 @@ import java.util.List;
 
 public class MyProduct implements IProduct {
 
+
     //产品名称
-    String     product_name = "";
+    protected  String     product_name = "";
 
     //产品种类
-    String     product_class="";     //设备种类,0:电表,1:水表
+    protected String     product_class="";     //设备种类,0:电表,1:水表
 
     //产品描述
-    String     product_dec="";     //设备种类,0:电表,1:水表
+    protected String     product_dec="";     //设备种类,0:电表,1:水表
 
     //密匙
-    String product_key="";
+    protected String     product_key="";
 
-    //产品类型,0:直连，1：网关
-    int  product_type=0;
+    //产品类型,0:直连，1：网关，2:网关子设备
+    protected int        product_type=PRODUCT_TYPE_GATEWAY;
 
     //规约类型
-    String product_protocal = "";
+    protected String product_protocal = "";
 
     //设备列表
     List<IDevice> lst_device = new ArrayList<IDevice>();
@@ -65,6 +67,16 @@ public class MyProduct implements IProduct {
     }
 
     @Override
+    public int getProduct_type() {
+        return product_type;
+    }
+
+    @Override
+    public void setProduct_type(int nType) {
+        product_type = nType;
+    }
+
+    @Override
     public String getProduct_dec() {
         return product_dec;
     }
@@ -93,8 +105,6 @@ public class MyProduct implements IProduct {
     public void setProductProtocal(String sProtocal) {
         product_protocal= sProtocal;
     }
-
-
 
     //获取设备的所有属性
     @Override
@@ -245,19 +255,23 @@ public class MyProduct implements IProduct {
         });
         device.setSignals(lstSignal);
 
-        //创建设备的数据采集器,并注册到产品容器中
-        if (device.CreateGather())
+        //创建设备的告警事件
+        List<MyProductEvent> lstEvnet=  new ArrayList<MyProductEvent>();
+        int nLen = lst_event.size();
+        for(int i = 0; i < nLen; i++)
         {
-            IDeviceGather gather = device.getGather();
-            if (null != gather)
+            MyProductEvent productEvent = lst_event.get(i);
+            if (null != productEvent)
             {
-                ProductionContainer.getTheMeterDeviceContainer().RegisteGather(gather);
+                lstEvnet.add(productEvent.copy(info.getDevice_name()));
             }
         }
+        device.setEvents(lstEvnet);
 
         return device;
     }
 
+    //添加一个设备
     @Override
     public boolean AddDevice(MyProductDeviceInfo info) {
 
@@ -271,7 +285,12 @@ public class MyProduct implements IProduct {
             return false;
         }
 
-       IDevice device =  CreateDevice(info);
+        IDevice device =  CreateDevice(info);
+        if (null == device)
+        {
+            return false;
+        }
+
         lst_device.add(device);
 
         //添加到映射表中
@@ -300,6 +319,39 @@ public class MyProduct implements IProduct {
         }
 
         return null;
+    }
+
+
+    //创建P2P数据采集器
+    @Override
+    public boolean CreateP2PGather() {
+        return false;
+    }
+
+    //创建物联网关数据采集器
+    @Override
+    public boolean CreateGatewayGather() {
+
+        //如果产品不是网关设备，则跳过
+        if (product_type != PRODUCT_TYPE_GATEWAY)
+        {
+            return false;
+        }
+
+        int nLen = lst_device.size();
+        for(int i = 0; i < nLen; i++)
+        {
+            IDevice device = lst_device.get(i);
+            if (null != device)
+            {
+               IDeviceGather gather =   device.CreateGather();
+               if (null != gather)
+               {
+                   ProductionContainer.getTheMeterDeviceContainer().RegisteGather(gather);
+               }
+            }
+        }
+        return false;
     }
 
     public MyProduct(){

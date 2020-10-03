@@ -63,13 +63,26 @@ public class MySystemRedisBuffer {
          RedisStringBuffer item = new RedisStringBuffer(key,value);
          try
          {
-             System.err.println("实时数据进缓存队列: " + LocalDateTime.now());
              save_queue.put(item);
          }
          catch (Exception ex)
          {
-             System.err.println("实时数据进缓存队列异常: " + ex.getMessage());
+             System.err.println("Redis缓存异常: " + ex.getMessage());
          }
+    }
+
+    //保存数据
+    public void SaveBufferItem(String key,Object value,boolean persisten)
+    {
+        RedisStringBuffer item = new RedisStringBuffer(key,value,persisten);
+        try
+        {
+
+            save_queue.put(item);
+        }
+        catch (Exception ex)
+        {
+        }
     }
 
     //保存回调函数
@@ -84,14 +97,23 @@ public class MySystemRedisBuffer {
         {
             while(save_queue.size() != 0)
             {
-                System.err.println("保存实时数据: " + LocalDateTime.now());
 
                 IRedisBufferItem buffer = (IRedisBufferItem)save_queue.poll();
                 if (null != buffer)
                 {
                     String key = buffer.key();
                     String sValue = (String)buffer.getValue();
-                    redisTemplate.opsForValue().set(key,sValue,30, TimeUnit.DAYS);  //设置数据有效期为1个月
+
+                    if (buffer.isPeristen())   //长期有效
+                    {
+                        redisTemplate.opsForValue().setIfPresent(key,sValue);  //设置数据长期有效
+                    }
+                    else
+                    {
+                        redisTemplate.opsForValue().set(key,sValue,buffer.getExipreSeconds(), TimeUnit.SECONDS);  //设置数据有效期为1个月
+
+                    }
+
                 }
             }
 

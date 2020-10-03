@@ -2,6 +2,8 @@ package com.xd.pre.modules.myeletric.domain;
 
 import lombok.Data;
 
+import java.sql.Timestamp;
+
 @Data
 public class MyProductDeviceInfo {
 
@@ -14,12 +16,12 @@ public class MyProductDeviceInfo {
     private String  device_group;              //设备分组
     private int     device_type;              //设备类型:0,子设备,1:网关设备
     private String  device_key ;              //设备访问Key
-    private  int    sub_index;                //在网关中的子设备号
     private  int    device_no;                //设备号
-    private String  device_dec ;              //设备描述
     private String  gateway_name ;            //网关名称
-    private String  gateway_channel ;         //网关通道
-    private int     upt_tick;                 //更新时间
+    private String        gateway_channel ;         //网关通道
+    private String     device_memo;           //备注,可以记录网关的卡号
+    private Timestamp     crt_time;               //创建时间
+    private Timestamp     upt_time;           //更新时间
 
 
 }

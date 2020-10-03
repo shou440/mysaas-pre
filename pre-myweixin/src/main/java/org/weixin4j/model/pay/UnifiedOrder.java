@@ -52,6 +52,8 @@ public class UnifiedOrder {
     private String trade_type;          //交易类型 取值如下：JSAPI，NATIVE，APP
     private String product_id;          //商品ID，trade_type=NATIVE时，此参数必传。此id为二维码中包含的商品ID，商户自行定义。
     private String openid;              //用户标识
+    private String time_start;          //订单创建时间
+    private String time_expire;         //超时时间
 
     public Map<String, String> toMap() {
         Map<String, String> map = new HashMap<String, String>();
@@ -69,6 +71,8 @@ public class UnifiedOrder {
         }
         map.put("spbill_create_ip", spbill_create_ip);
         map.put("total_fee", total_fee);
+        map.put("time_start",time_start);
+        map.put("time_expire",time_expire);
         map.put("trade_type", trade_type);
         return map;
     }
@@ -90,6 +94,8 @@ public class UnifiedOrder {
         }
         sb.append("<spbill_create_ip><![CDATA[").append(spbill_create_ip).append("]]></spbill_create_ip>");
         sb.append("<total_fee><![CDATA[").append(total_fee).append("]]></total_fee>");
+        sb.append("<time_start><![CDATA[").append(time_start).append("]]></time_start>");
+        sb.append("<time_expire><![CDATA[").append(time_expire).append("]]></time_expire>");
         sb.append("<trade_type><![CDATA[").append(trade_type).append("]]></trade_type>");
         sb.append("<sign><![CDATA[").append(sign).append("]]></sign>");
         sb.append("</xml>");
@@ -147,4 +153,7 @@ public class UnifiedOrder {
     public void setProduct_id(String product_id) {
         this.product_id = product_id;
     }
+
+    public void setTime_start(String startTM){this.time_start = startTM;}
+    public void setTime_expire(String expireTm){this.time_expire=expireTm;}
 }

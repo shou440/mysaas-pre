@@ -9,6 +9,10 @@ import com.xd.MyWeixinStub;
 import com.xd.pre.common.exception.PreBaseException;
 import com.xd.pre.log.annotation.SysOperaLog;
 import com.xd.pre.modules.myeletric.dto.MyWXUserFilterDto;
+import com.xd.pre.modules.sys.domain.SysUserCount;
+import com.xd.pre.modules.sys.dto.SysUserCountDTO;
+import com.xd.pre.modules.sys.mapper.SysUserCountMapper;
+import com.xd.pre.security.PreSecurityUser;
 import com.xd.pre.security.util.SecurityUtil;
 import com.xd.pre.common.constant.PreConstant;
 import com.xd.pre.modules.sys.domain.SysUser;
@@ -20,10 +24,13 @@ import com.xd.pre.modules.sys.util.PreUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.weixin4j.model.sns.SnsUser;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * <p>
@@ -39,6 +46,9 @@ public class SysUserController {
 
     @Autowired
     private ISysUserService userService;
+
+    @Autowired
+    private SysUserCountMapper sysUserCountMapper;
 
     @Autowired
     private EmailUtil emailUtil;
@@ -227,7 +237,77 @@ public class SysUserController {
     }
 
 
+    //获取用户的账户信息
+    @SysOperaLog(descrption = "获取用户的结算账户信息")
+    @RequestMapping(value = "/getpromotioncount", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+    public R GetPromotionCount() {
 
+        PreSecurityUser user = SecurityUtil.getUser();
+        if (null == user)
+        {
+            return R.error("更新失败,安全认证失败!");
+        }
+
+
+        //获取当前连接的用户ID
+        try {
+
+            List<SysUserCount> lstCount = sysUserCountMapper.getUserCountByUserID(user.getUserId());
+            SysUserCount userCount = lstCount.get(0);
+            if (null == userCount)
+            {
+                return R.error("获取用户结算账号为空");
+            }
+
+            return R.ok(userCount);
+
+        } catch (Exception ex) {
+
+            return R.error("获取用户结算账号失败"+ex.getMessage()+"\n");
+        }
+    }
+
+    //更新业主的结算账号
+    @SysOperaLog(descrption = "更新业主的结算账号")
+    @RequestMapping(value = "/updatepromotioncount", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+    public R updatePromotionCount( SysUserCountDTO userCountDTO) {
+
+        if(null == userCountDTO)
+        {
+            return R.error("更新失败,业主账号为空");
+        }
+
+
+        //获取当前连接的用户ID
+        try {
+
+            SysUserCountDTO userUpt = new SysUserCountDTO();
+            PreSecurityUser user = SecurityUtil.getUser();
+            if (null == user)
+            {
+                return R.error("更新失败,安全认证失败!");
+            }
+
+            userUpt.setUser_id(user.getUserId());
+            userUpt.setCount_type(userCountDTO.getCount_type());
+            userUpt.setUser_count(userCountDTO.getUser_count());
+
+            int ret = sysUserCountMapper.updateUserCount(userUpt);
+            if (ret == 1)
+            {
+                return R.ok("更新结算账户成功");
+            }
+            else
+            {
+                return R.ok("更新结算账户失败");
+            }
+
+
+        } catch (Exception ex) {
+
+            return R.error("获取用户结算账号失败");
+        }
+    }
 
 }
 

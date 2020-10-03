@@ -111,6 +111,9 @@ public class UserComponent extends AbstractComponent {
      * @throws org.weixin4j.WeixinException 微信操作异常
      */
     public User info(String openid, String lang) throws WeixinException {
+
+        System.out.print("UserComponent.info信息:"+openid+"\n");
+
         if (StringUtils.isEmpty(openid)) {
             throw new IllegalArgumentException("openid can't be null or empty");
         }
@@ -134,8 +137,7 @@ public class UserComponent extends AbstractComponent {
         Object errcode = jsonObj.get("errcode");
         if (errcode != null) {
 
-            //获取用户信息异常则刷新全局的Token
-            MyWeixinStub.getTheMyWeixinStub().FreshToken();
+            System.out.print("UserComponent.info异常:"+jsonObj.toJSONString()+"\n");
 
             //返回异常信息
             throw new WeixinException(getCause(jsonObj.getIntValue("errcode")));

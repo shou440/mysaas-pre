@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xd.pre.modules.sys.mapper.SysUserCountMapper">
+    <resultMap id="sysUserCountResult" type="com.xd.pre.modules.sys.domain.SysUserCount">
+        <result column="user_id" property="user_id" jdbcType="INTEGER"></result>
+        <result column="count_type" property="count_type" jdbcType="INTEGER"></result>
+        <result column="user_count" property="user_count" jdbcType="VARCHAR"></result>
+    </resultMap>
+    <select id="getUserCountByUserID" resultMap="sysUserCountResult">
+        select * from sys_user_count where user_id =#{user_id}
+    </select>
+    <select id="getUserByCount" resultMap="sysUserCountResult">
+        select * from sys_user_count where user_count =#{user_count}
+    </select>
+    <insert id="createUserCount"  parameterType="com.xd.pre.modules.sys.dto.SysUserCountDTO">
+        insert into sys_user_count (user_id, count_type,user_count)
+        values ( #{usercount.user_id}, #{usercount.count_type}, #{usercount.user_count})
+    </insert>
+    <update id="updateUserCount" parameterType="com.xd.pre.modules.sys.dto.SysUserCountDTO">
+        update sys_user_count
+        <set>
+            count_type = #{usercount.count_type},
+            user_count = #{usercount.user_count},
+            upt_time = now(),
+        </set>
+        where user_id = #{usercount.user_id}
+    </update>
+</mapper>

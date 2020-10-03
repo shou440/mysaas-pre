@@ -2,6 +2,8 @@ package com.xd.pre.modules.myeletric.domain;
 
 import lombok.Data;
 
+import java.sql.Timestamp;
+
 @Data
 public class MyUserMeter {
     /**
@@ -10,6 +12,7 @@ public class MyUserMeter {
 
     private Integer  meter_id;
     private Integer  user_id;
-    private Integer  pay_id;
-
+    private String  pay_id;
+    private Timestamp crt_time;
+    private Timestamp upt_time;
 }

@@ -76,7 +76,34 @@
         where meter_id = #{meter.meter_id}
     </update>
     <insert id="recordEp" parameterType="com.xd.pre.modules.myeletric.domain.MyMeterRecord">
-        insert into my_meter_record (room_id,meter_id,ep_cur,fresh_time)
-        values (#{record.room_id},#{record.meter_id},#{record.ep_cur},#{record.fresh_time,jdbcType=TIMESTAMP})
+        insert into my_meter_record (room_id,meter_id,ep_cur,ep_left,fresh_time)
+        values (#{record.room_id},#{record.meter_id},#{record.ep_cur},#{record.ep_left},#{record.fresh_time,jdbcType=TIMESTAMP})
+    </insert>
+
+    <insert id="addNewMeter" parameterType="com.xd.pre.modules.myeletric.domain.MyMeter">
+        insert into my_meter (meter_id,
+                                    room_id,
+                                    meter_type,
+                                    meter_ct,
+                                    meter_pt,
+                                    meter_status,
+                                    meter_dec,
+                                    ep_base,
+                                    ep_last,
+                                    ep_price,
+                                    meter_crt_date,
+                                    meter_upt_date)
+        values (#{meter.meter_id},
+                #{meter.room_id},
+                #{meter.meter_type},
+                #{meter.meter_ct},
+                #{meter.meter_pt},
+                #{meter.meter_status},
+                #{meter.meter_dec},
+                #{meter.ep_base},
+                #{meter.ep_last},
+                #{meter.ep_price},
+                #{meter.meter_crt_date,jdbcType=TIMESTAMP},
+                #{meter.meter_upt_date,jdbcType=TIMESTAMP})
     </insert>
 </mapper>

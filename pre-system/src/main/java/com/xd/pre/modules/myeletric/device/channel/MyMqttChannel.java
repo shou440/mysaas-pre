@@ -149,7 +149,7 @@ public class MyMqttChannel  implements  IMyChannel{
             //添加设备的订阅
             try
             {
-                IDevice device = gather.getDevice();
+                IDevice device = gather.getGateWayDevice();
                 String sTopic = "/Gateway/Response/"
                         +device.getDeviceName();
 
@@ -170,7 +170,7 @@ public class MyMqttChannel  implements  IMyChannel{
             //添加设备的订阅
             try
             {
-                IDevice device = gather.getDevice();
+                IDevice device = gather.getGateWayDevice();
                 String sTopic = "/Gateway/Response/"
                         +device.getDeviceName();
 
@@ -206,7 +206,7 @@ public class MyMqttChannel  implements  IMyChannel{
             options.setUserName(userName);
             options.setPassword(passWord.toCharArray());
             options.setConnectionTimeout(30);
-            options.setKeepAliveInterval(60);
+            options.setKeepAliveInterval(80);    //60秒一次的心跳保持
             options.setAutomaticReconnect(true);   //设置自动重连
 
             //连接服务器
@@ -285,6 +285,7 @@ public class MyMqttChannel  implements  IMyChannel{
 
     }
 
+    //数据接收线程
     @Override
     public void RecThreadFun() {
 
@@ -303,8 +304,6 @@ public class MyMqttChannel  implements  IMyChannel{
                     SubcribeGather(gather);
                 }
             }
-
-
 
             //判断是否有新挂接的设备数据采集器
             while(queue_newGather.size() > 0)
@@ -418,7 +417,7 @@ public class MyMqttChannel  implements  IMyChannel{
             gather = lstGather.get(i);
             if (null != gather)
             {
-                IDevice device = gather.getDevice();
+                IDevice device = gather.getGateWayDevice();
                 if (null != device && device.getDeviceName().equals(sDeviceName) && device.getProductName().equals(sProduct))
                 {
                     return gather;
@@ -439,8 +438,8 @@ public class MyMqttChannel  implements  IMyChannel{
            // return PreConstant.ERR_CHANNEL_GATHER_NONE;
         }
 
-        //获取采集器对应的设备
-        IDevice device = gather.getDevice();
+        //获取采集器对应的网关设备
+        IDevice device = gather.getGateWayDevice();
         if (null == device)
         {
             return;

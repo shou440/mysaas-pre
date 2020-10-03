@@ -1,39 +1,35 @@
 package com.xd.pre.modules.myeletric.controller;
 
 
-import com.xd.pre.common.utils.CommonFun;
+
 import com.xd.pre.common.utils.R;
 import com.xd.pre.log.annotation.SysOperaLog;
+import com.xd.pre.modules.myeletric.buffer.MySystemRedisBuffer;
+import com.xd.pre.modules.myeletric.device.command.*;
 import com.xd.pre.modules.myeletric.device.production.IDevice;
-import com.xd.pre.modules.myeletric.device.production.IProduct;
-import com.xd.pre.modules.myeletric.device.production.IProductProperty;
 import com.xd.pre.modules.myeletric.device.production.ProductionContainer;
+import com.xd.pre.modules.myeletric.domain.MyCommandInfo;
 import com.xd.pre.modules.myeletric.domain.MyMeter;
 import com.xd.pre.modules.myeletric.domain.MyRoom;
 import com.xd.pre.modules.myeletric.domain.MyUserMeter;
-import com.xd.pre.modules.myeletric.dto.MyMeterBasePriceDto;
-import com.xd.pre.modules.myeletric.dto.MyMeterFilter;
-import com.xd.pre.modules.myeletric.dto.MyRoomFilterDto;
+import com.xd.pre.modules.myeletric.dto.*;
 import com.xd.pre.modules.myeletric.service.IMyMeterService;
 import com.xd.pre.modules.myeletric.service.IMyRoomService;
 import com.xd.pre.modules.myeletric.service.IMyUserMeterService;
+import com.xd.pre.modules.myeletric.vo.CommandSN;
+import com.xd.pre.modules.myeletric.vo.CommandStateVO;
 import com.xd.pre.modules.myeletric.vo.MyMeterVo;
-import com.xd.pre.modules.sys.util.RedisUtil;
 import com.xd.pre.security.PreSecurityUser;
 import com.xd.pre.security.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
 
 @RestController
 @RequestMapping("/meter")
@@ -311,6 +307,186 @@ public class MyMeterController {
             return R.error("设置失败");
         }
 
+    }
+
+    /*获取新命令*/
+    @PreAuthorize("hasAuthority('sys:room:view')")
+    @SysOperaLog(descrption = "获取命令流水号")
+    @RequestMapping(value = "/getmetercommandsn", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+    public R getNewCommandSN() {
+
+        System.out.print("获取新命令1111\n");
+        CommandSN cmdSN = new CommandSN(CommandContainer.getInstance().getNewSN());
+        return R.ok(cmdSN);
+
+
+
+    }
+
+    /*获取命令的执行结果*/
+    @PreAuthorize("hasAuthority('sys:room:view')")
+    @SysOperaLog(descrption = "获取命令的执行结果")
+    @RequestMapping(value = "/fetchmetercmdstate", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+    public R fetchMeterCommandState(MyCommandStateQrtDto cmdSN) {
+
+        try {
+
+            if(null == cmdSN)
+            {
+                System.out.print("获取命令传递参数为空");
+            }
+
+            String sState = "";
+            String key = "commandstate_"+String.format("%012d",cmdSN.getCommand_sn());
+            sState = MySystemRedisBuffer.getTheSinTon().getReisItemString(key);
+            if (sState.equals(""))
+            {
+                return R.error("查询命令失败!");
+            }
+            int nState = Integer.parseInt(sState);
+
+            String str = String.format("命令%s状态:%d\n",key,nState);
+            System.out.print(str);
+
+            //提取命令错误描述
+            String errkey = "command-errmsg_"+String.format("%012d",cmdSN.getCommand_sn());
+            String errmsg = MySystemRedisBuffer.getTheSinTon().getReisItemString(errkey);
+
+            CommandStateVO cmdState = new CommandStateVO();
+            cmdState.setCommand_sn(cmdSN.getCommand_sn());
+            cmdState.setCommand_state(nState);
+            cmdState.setErr_msg(errmsg);
+
+            return R.ok(cmdState);
+        }
+        catch (Exception ex)
+        {
+            return R.error("获取命令状态异常!"+ex.getStackTrace());
+        }
+
+
+    }
+
+
+    /*执行电表命令*/
+    @PreAuthorize("hasAuthority('sys:room:view')")
+    @SysOperaLog(descrption = "执行电表交互命令")
+    @RequestMapping(value = "/metercommand", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+    public R meterCommand(MeterCommandDto meterCommandDto) {
+
+        PreSecurityUser user = SecurityUtil.getUser();
+        if(user == null)
+        {
+            return R.error("您无权限操作电表，请重新登录!");
+        }
+        meterCommandDto.setUser_id(user.getUserId());
+
+        if (null == meterCommandDto)
+        {
+            return R.error("电表执行命令参数错误");
+        }
+
+        //判断该电表是否为该业主所属，不是则报告该电表业主无权设置电价
+        MyUserMeter userMeter = iMyUserMeterService.getUserMeterByMeterid(meterCommandDto.getMeter_id());
+        if (null == userMeter || userMeter.getUser_id() != user.getUserId())
+        {
+            return R.error("该电表属于其他业主，您无权操作!");
+        }
+
+
+        //获取电表对象的硬件设备
+        List<MyMeter> lstMeter = iMyMeterService.getMeter(meterCommandDto.getMeter_id());
+        if (null == lstMeter || lstMeter.size() == 0)
+        {
+            return R.error("电表不存在!");
+        }
+
+        MyMeter meter = lstMeter.get(0);
+        if (null ==meter)
+        {
+            return R.error("电表不存在!");
+        }
+
+        String sDeviceName = String.format("Meter%06d",meter.getMeter_id());
+        IDevice meterDevice = ProductionContainer.getTheMeterDeviceContainer().getDevice(sDeviceName);
+        if (null == meterDevice)
+        {
+            return R.error("电表配置数据错误!");
+        }
+
+        //执行电表命令
+        try {
+
+            MyCommandInfo cmd = new MyCommandInfo();
+            IMyCommand command = CommandContainer.getInstance().CreateCommand(meterCommandDto);
+            if (null == command)
+            {
+                return R.error("执行电表命令失败1!");
+            }
+
+            // 根据不同的命令初始化命令参数
+            switch(command.getCommandType())
+            {
+                case IMyCommand.COMMAND_CHARGE:
+                {
+                    MyChargeCommand chargecommand = (MyChargeCommand)command;
+                    if(null == chargecommand)
+                    {
+                        return R.error("充电命令参数错误!");
+                    }
+                    float fTotalEP = meterCommandDto.getCommand_value()/meter.getEp_price();
+                    chargecommand.SetChargeFee(meterCommandDto.getCommand_value());
+                    chargecommand.SetChargeEP(fTotalEP);
+                    break;
+                }
+                case IMyCommand.COMMAND_MANNER_ADJUST:
+                {
+                    MyMeterDrawbackCommand drawbackCommand = (MyMeterDrawbackCommand)command;
+                    if(null == drawbackCommand)
+                    {
+                        return R.error("退电命令参数错误!");
+                    }
+                    float fTotalEP = meterCommandDto.getCommand_value()/meter.getEp_price();
+                    drawbackCommand.SetDrawbackFee(meterCommandDto.getCommand_value());
+                    drawbackCommand.SetDrawbackEP(fTotalEP);
+                    break;
+                }
+                case IMyCommand.COMMAND_MANNER_CLEARLEFT:
+                {
+                    MyClearLeftEPCommand clearLeftEPCommand = (MyClearLeftEPCommand)command;
+                    if(null == clearLeftEPCommand)
+                    {
+                        return R.error("清零剩余电量参数错误!");
+                    }
+
+                    break;
+                }
+            }
+
+          //  MyChargeCommand chargecommand = (MyChargeCommand)CommandContainer.getInstance().CreateCommand(meterCommandDto);
+        //    if(null == chargecommand)
+          //  {
+         //       return R.error("电表操作命令参数错误!");
+         //   }
+
+
+
+            //设置电费
+        //    float fTotalEP = meterCommandDto.getCommand_value()/meter.getEp_price();
+          //  chargecommand.SetChargeFee(meterCommandDto.getCommand_value());
+           // chargecommand.SetChargeEP(fTotalEP);
+
+
+
+            //添加命令到命令缓冲队列
+            CommandContainer.getInstance().AddNewCommand(command);
+
+            return R.ok("");
+        }
+        catch (Exception ex)
+        {
+            return R.error("执行命令异常:"+ex.getMessage());
+        }
     }
 
 }

@@ -2,7 +2,9 @@ package com.xd.pre.common.utils;
 
 
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 
 public class CommonFun {
 
@@ -18,6 +20,15 @@ public class CommonFun {
        int maxDate = a.get(Calendar.DATE);
        return maxDate;
     }
+
+    //获取当前时间的字符串
+    public static String getTimeStr(Date day)
+    {
+        SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
+        String sDate = df.format(day);
+        return sDate;
+    }
+
 
     public static int GetTick()
     {

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xd.pre.modules.pay.mapper.MyPromotionMapper">
+    <resultMap id="promtionResult" type="com.xd.pre.modules.pay.vo.MyPromotionInfo">
+        <result column="promotion_id" property="promotion_id" jdbcType="VARCHAR"></result>
+        <result column="promotion_type" property="promotion_type" jdbcType="INTEGER"></result>
+        <result column="total_fee" property="total_fee" jdbcType="FLOAT"></result>
+        <result column="sx_fee" property="sx_fee" jdbcType="FLOAT"></result>
+        <result column="promotion_fee" property="promotion_fee" jdbcType="FLOAT"></result>
+        <result column="user_id" property="user_id" jdbcType="INTEGER"></result>
+        <result column="user_name" property="user_name" jdbcType="VARCHAR"></result>
+        <result column="user_count" property="user_count" jdbcType="VARCHAR"></result>
+        <result column="promotion_memo" property="promotion_memo" jdbcType="VARCHAR"></result>
+        <result column="crt_time" property="crt_time" jdbcType="TIMESTAMP"></result>
+    </resultMap>
+    <select id="getPromotionByUserID" resultMap="promtionResult">
+        select * from my_promotion where user_id =#{user_id}
+    </select>
+    <select id="getPromotionByPromotionID" resultMap="promtionResult">
+        select * from my_promotion where promotion_id =#{promotion_id}
+    </select>
+    <insert id="createPromotion"  parameterType="com.xd.pre.modules.pay.vo.MyPromotionInfo">
+        insert into my_promotion (promotion_id,
+                                  promotion_type,
+                                  total_fee,
+                                  sx_fee,
+                                  promotion_fee,
+                                  user_id,
+                                  user_name,
+                                  user_count,
+                                  promotion_memo,
+                                  crt_time)
+        values ( #{promotion.user_id},
+                 #{promotion.promotion_type},
+                 #{promotion.total_fee},
+                 #{promotion.sx_fee},
+                 #{promotion.promotion_fee},
+                 #{promotion.user_id},
+                 #{promotion.user_name},
+                 #{promotion.user_count},
+                 #{promotion.promotion_memo},
+                 #{promotion.crt_time,jdbcType=TIMESTAMP})
+    </insert>
+</mapper>

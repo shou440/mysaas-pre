@@ -27,6 +27,6 @@ public interface IMyMeterService  extends IService<MyMeter> {
      List<MyMeterTenantTb> getMeterTenatList();
     Integer saveEP(MyMeter meter,MyMeterRecord record);
     List<MyMeterRecord> getEpRecord(MyMeterRdQryDto qrParam);
-
+    public Integer addNewMeter(MyMeter meter);
 
 }

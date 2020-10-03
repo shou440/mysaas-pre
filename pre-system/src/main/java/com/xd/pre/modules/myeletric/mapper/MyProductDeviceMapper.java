@@ -14,4 +14,14 @@ public interface MyProductDeviceMapper {
 
     //获取产品的设备列表
     public List<MyProductDeviceInfo> getProductDevice(@Param("product_name") String product_name);
+
+    public Integer addNewDevice(@Param("device") MyProductDeviceInfo device);
+
+    public Integer getMaxDeviceNO();
+
+    public Integer getSubDeviceNOByIMEI(@Param("imei") String imei);
+
+    public List<MyProductDeviceInfo> getSubDeviceByGroup(@Param("device_group") String device_group);
+
+
 }

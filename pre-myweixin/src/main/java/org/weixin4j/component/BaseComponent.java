@@ -74,6 +74,9 @@ public class BaseComponent extends AbstractComponent {
             //返回异常信息
             throw new WeixinException(getCause(jsonObj.getIntValue("errcode")));
         }
+
+        System.out.println("获取基础Token成功：" + jsonObj.toString());
+
         //设置凭证，设置accessToken和过期时间
         return (Token) JSONObject.toJavaObject(jsonObj, Token.class);
     }

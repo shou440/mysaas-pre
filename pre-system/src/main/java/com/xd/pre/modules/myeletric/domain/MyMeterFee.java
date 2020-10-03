@@ -14,7 +14,7 @@ public class MyMeterFee {
     private Integer    user_id;   //业主ID
     private String     fee_sn;    //流水号
     private String     tenant_id;
-    private Integer    payment_id;
+    private String    payment_id;
     private String     area_city;
     private String     area_name;
     private String     room_name;

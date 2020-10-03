@@ -2,11 +2,17 @@ package com.xd.pre.modules.pay;
 
 import com.xd.MyWeixinStub;
 import com.xd.pre.common.utils.CommonFun;
-import com.xd.pre.modules.pay.dto.PaymentUptParam;
+import com.xd.pre.modules.myeletric.device.command.CommandContainer;
+import com.xd.pre.modules.myeletric.device.command.IMyCommand;
+import com.xd.pre.modules.myeletric.device.production.IDevice;
+import com.xd.pre.modules.myeletric.mydb.MyDbStub;
+import com.xd.pre.modules.pay.promotion.MyPromotion;
+import com.xd.pre.modules.sys.domain.SysUser;
 import org.weixin4j.model.pay.OrderQueryResult;
 
 public class WXPayment extends Payment {
 
+    private int  expire_tick = 0;
     private long last_query_tick = 0;
     private long  query_gap = 500;
     private int  query_times  = 0;
@@ -15,29 +21,43 @@ public class WXPayment extends Payment {
     public WXPayment(PaymentInfo pay)
     {
         payment_info = pay;
+        expire_tick = CommonFun.GetTick()+60;
     }
 
-    private void SwitchState(int nNextState)
+    //判断是否超期
+    protected boolean IsExpire()
     {
-        pay_state = nNextState;
-    }
+        if (expire_tick < CommonFun.GetTick())
+        {
+            return  true;
+        }
 
-    //支付成功，更新支付状态
-    private  boolean uptStatus()
-    {
         return false;
     }
 
-    //支付失败或撤销，更新支付状态
 
-
-    //检查支付单是否支付成功
-    private void State_Query()
+    //检查支付单是否支付成功,支付的超期时间为1分钟，超过1分钟则认为用户订单支付失败
+    protected void State_Query()
     {
         //如果通知成功，则直接进入成功状态
         if (success_notify)
         {
             SwitchState(PAY_STATE_CMPLT);
+            return;
+        }
+
+        //如果取消则
+        if(cancel_notify)
+        {
+            SwitchState(PAY_STATE_CANCEL);
+            return;
+        }
+
+        //判断是否超期
+        if (IsExpire())
+        {
+            System.out.print("支付异常:超期\n");
+            SwitchState(PAY_STATE_ABORT);
             return;
         }
 
@@ -60,14 +80,16 @@ public class WXPayment extends Payment {
         PaymentInfo payInfo = getPaymentInfo();
         if (payInfo == null)
         {
-            SwitchState(PAY_STATE_ABORT);
             error_message = "支付单信息没设置";
+            System.out.print("支付异常:支付单信息没设置");
+            SwitchState(PAY_STATE_ABORT);
+
             return;
         }
 
         //查询支付结果
         OrderQueryResult ret = MyWeixinStub.getTheMyWeixinStub().QueryPay(payInfo.getPayment_id());
-        boolean isNeedUpt = false;
+
 
         if (null != ret)
         {
@@ -77,48 +99,70 @@ public class WXPayment extends Payment {
                     && ret.getResult_code().equals("SUCCESS")
                    )
             {
+
+
                 if (ret.getTrade_state().equals("SUCCESS"))             //支付成功，修改水费单和电费单
                 {
                     //判断支付单的原因是支付费单，则修改费单的状态
-                    System.out.print("查询支付成功");
                     SwitchState(PAY_STATE_CMPLT);
-
-                    isNeedUpt = true;
-
-                    //
                 }
                 else if ( ret.getTrade_state().equals("CLOSED"))        //交易超时关闭，解锁费单
                 {
-                    System.out.print("查询支付中止CLOSED");
-                    SwitchState(PAY_STATE_ABORT);
+
                     error_message = "支付超时关闭";
-                    isNeedUpt = true;
+                    System.out.print("支付异常：支付超时关闭");
+                    SwitchState(PAY_STATE_ABORT);
                 }
                 else if ( ret.getTrade_state().equals("REVOKED"))        //交易撤销
                 {
-                    System.out.print("查询支付中止REVOKED");
-                    SwitchState(PAY_STATE_CANCEL);
+
                     error_message = "支付撤销";
-                    isNeedUpt = true;
+                    SwitchState(PAY_STATE_CANCEL);
+
+
                 }
                 else if (ret.getTrade_state().equals("PAYERROR"))       //交易错误
                 {
-                    System.out.print("查询支付中止PAYERROR");
-                    SwitchState(PAY_STATE_ABORT);
+
                     error_message = "支付错误";
-                    isNeedUpt = true;
+                    System.out.print("支付异常：支付错误");
+                    SwitchState(PAY_STATE_ABORT);
+
+
                 }
             }
 
-            if(isNeedUpt)
-            {
-                System.out.print("更新支付单状态和费单状态");
-                PaymentUptParam uptParam = new PaymentUptParam();
-                payInfo.setPayment_status(pay_state);
-                PaymentContainer.GetThePaymentContainer().UptPayment(payInfo);
-            }
+
         }
     }
+
+    //执行成功后，写入Redis查询结果,并查看是否有关联的设备命令，如果有则执行设备命令，如充值
+    protected void state_cmplt()
+    {
+
+        SwitchState(IPayment.PAY_STATE_PROMOTION_PREPARE);
+
+    }
+    //提成准备
+    protected void state_promotion_prepare() {
+
+        String  trade_no = getPaymentInfo().getPayment_id()+"99";
+        String  openid = getPaymentInfo().getUser_count();
+        int  countType = getPaymentInfo().getCount_type();
+        float fFee = getPaymentInfo().getPayment_fee()/1000.0f;
+        MyWeixinStub.getTheMyWeixinStub().userPromotion(openid,trade_no,"结算水电费",fFee);
+
+        SwitchState(IPayment.PAY_STATE_DISPOSE);
+    }
+
+    //查询提成是否到账
+    protected void state_promotion() {
+
+
+
+    }
+  
+
 
     //支付回调函数
     @Override
@@ -130,12 +174,12 @@ public class WXPayment extends Payment {
             {
                 if (payment_info == null)
                 {
-                    pay_state = PAY_STATE_ABORT;
                     error_message = "支付单信息没设置";
+                    SwitchState(PAY_STATE_ABORT);
                 }
                 else
                 {
-                    pay_state = PAY_STATE_PAY_QUERY;
+                    SwitchState(PAY_STATE_PAY_QUERY);
                 }
 
                 break;
@@ -143,6 +187,29 @@ public class WXPayment extends Payment {
             case PAY_STATE_PAY_QUERY:                   //实时查询
             {
                 State_Query();
+                break;
+            }
+            case PAY_STATE_CMPLT:
+            {
+                state_cmplt();
+                break;
+            }
+            case PAY_STATE_PROMOTION_PREPARE:     //结算准备
+            {
+                state_promotion_prepare();
+                break;
+            }
+            case PAY_STATE_PROMOTION:            //结算查询中
+            {
+                state_promotion();
+                break;
+            }
+            case PAY_STATE_CANCEL:      //取消
+            {
+                break;
+            }
+            case PAY_STATE_ABORT:      //支付异常
+            {
                 break;
             }
 

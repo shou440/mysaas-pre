@@ -8,14 +8,47 @@
         <result column="device_group" property="device_group" jdbcType="VARCHAR"></result>
         <result column="device_type" property="device_type" jdbcType="INTEGER"></result>
         <result column="device_key" property="device_key" jdbcType="VARCHAR"></result>
-        <result column="sub_index" property="sub_index" jdbcType="INTEGER"></result>
         <result column="device_no" property="device_no" jdbcType="INTEGER"></result>
-        <result column="device_dec" property="device_dec" jdbcType="VARCHAR"></result>
         <result column="gateway_name" property="gateway_name" jdbcType="VARCHAR"></result>
         <result column="gateway_channel" property="gateway_channel" jdbcType="VARCHAR"></result>
-        <result column="upt_tick" property="upt_tick" jdbcType="INTEGER"></result>
+        <result column="device_memo" property="device_memo" jdbcType="VARCHAR"></result>
+        <result column="crt_time" property="crt_time" jdbcType="TIMESTAMP"></result>
+        <result column="upt_time" property="upt_time" jdbcType="TIMESTAMP"></result>
     </resultMap>
     <select id="getProductDevice" resultMap="ProductDeviceInfo">
         select * from product_device where product_name=#{product_name}
     </select>
+    <select id="getSubDeviceByGroup" resultMap="ProductDeviceInfo">
+        select * from product_device where device_group=#{device_group} and device_type=0
+    </select>
+    <select id="getMaxDeviceNO" resultType="Integer">
+        select MAX(device_no) as max_device_no from product_device
+    </select>
+    <select id="getSubDeviceNOByIMEI" resultType="Integer">
+        select MAX(device_no) as max_device_no from product_device where gateway_name=#{imei}
+    </select>
+    <insert id="addNewDevice" parameterType="com.xd.pre.modules.myeletric.domain.MyProductDeviceInfo">
+        insert into product_device (product_name,
+                                    device_name,
+                                    device_group,
+                                    device_type,
+                                    device_key,
+                                    device_no,
+                                    gateway_name,
+                                    gateway_channel,
+                                    device_memo,
+                                    crt_time,
+                                    upt_time)
+        values (#{device.product_name},
+                #{device.device_name},
+                #{device.device_group},
+                #{device.device_type},
+                #{device.device_key},
+                #{device.device_no},
+                #{device.gateway_name},
+                #{device.gateway_channel},
+                #{device.device_memo},
+                #{device.crt_time,jdbcType=TIMESTAMP},
+                #{device.upt_time,jdbcType=TIMESTAMP})
+    </insert>
 </mapper>

@@ -1,18 +1,24 @@
 package com.xd.pre.modules.myeletric.task;
 
+import com.xd.MyMqttStub;
+import com.xd.MyWeixinStub;
 import com.xd.pre.common.utils.CommonFun;
 import com.xd.pre.modules.myeletric.buffer.MySystemRedisBuffer;
 import com.xd.pre.modules.myeletric.device.channel.ChannelContainer;
+import com.xd.pre.modules.myeletric.device.command.CommandContainer;
 import com.xd.pre.modules.myeletric.device.production.IDevice;
 import com.xd.pre.modules.myeletric.device.production.IProduct;
 import com.xd.pre.modules.myeletric.device.production.IProductProperty;
 import com.xd.pre.modules.myeletric.device.production.ProductionContainer;
 import com.xd.pre.modules.myeletric.domain.*;
+import com.xd.pre.modules.myeletric.managecmd.ManageStub;
 import com.xd.pre.modules.myeletric.mapper.*;
 import com.xd.pre.modules.myeletric.message.MyMessageContainer;
+import com.xd.pre.modules.myeletric.mydb.MyDbStub;
 import com.xd.pre.modules.myeletric.service.*;
 import com.xd.pre.modules.pay.PaymentContainer;
 import com.xd.pre.modules.pay.mapper.MyPaymentMapper;
+import com.xd.pre.modules.sys.mapper.SysUserCountMapper;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -41,6 +47,9 @@ public class MyEPWaterRecordTask {
 
     @Autowired
     private IMyWMeterService iMyWMeterService;
+
+    @Autowired
+    private IMyAreaService iMyAreaService;
 
     @Autowired
     private IMyRoomService iMyRoomService;
@@ -90,6 +99,15 @@ public class MyEPWaterRecordTask {
     private IWaterFeeService myWaterFeeService;
 
 
+    @Autowired
+    private SysUserCountMapper sysUserCountMapper;     //电费充值对象
+
+    @Autowired
+    private MyCommandInfoMapper myCommandInfoMapper;     //命令对象
+
+    @Autowired
+    private IMyUserMeterService myUserMeterService;     //命令对象
+
 
     //每个整点执行数据保存
     @Scheduled(cron = "0 0 0/1 * * ?")
@@ -100,10 +118,10 @@ public class MyEPWaterRecordTask {
         RecordProperty();
 
         //记录属性数据
-          RecordEp();
+        RecordEp();
 
         //用水抄表
-         RecordEWater();
+        RecordEWater();
 
         CreateFee();
 
@@ -111,7 +129,7 @@ public class MyEPWaterRecordTask {
     }
     //每个整点执行数据保存
   //  @Scheduled(cron = "0 0 0/1 * * ?")
-    @Scheduled(cron="0/30 * *  * * ? ")  //60秒一次数据保存
+    @Scheduled(cron="0/30 * *  * * ? ")  //30秒一次数据保存
     private void recordTasks() {
 
         //装载通道数据
@@ -137,19 +155,48 @@ public class MyEPWaterRecordTask {
                     redisTemplate);
             ProductionContainer.getTheMeterDeviceContainer().StartService();
 
+            //设置数据库存储对象的句柄
+            MyDbStub.getInstance().setMapper(myCommandInfoMapper,
+                    iMyMeterService,
+                    iMyAreaService,
+                    iMyRoomService,
+                    sysUserCountMapper,
+                    ipaymentMapper,
+                    deviceMapper,
+                    myUserMeterService);
+
             //设置支付单容器
             PaymentContainer.GetThePaymentContainer().setMapper(
                     ipaymentMapper,
                     myMeterFeeService,
-                    myWaterFeeService);
+                    myWaterFeeService,
+                    sysUserCountMapper);
             PaymentContainer.GetThePaymentContainer().StartService();
 
             //启动微信通知
             MyMessageContainer.getSinTon().StartService();
 
+            //装载Command的序号
+            CommandContainer.getInstance().SetMapper(iMyMeterService);
+            CommandContainer.getInstance().LoadMaxSN();
+            CommandContainer.getInstance().StartService();
+
+            //启动命令接口
+            MyMqttStub.getTheMyMqttStub().StartService();
+            ManageStub.getSinTon().startService();
+            
+
             //将电表和水表进行设备绑定，方便查询
             System.err.println("执行启动任务时间: " + LocalDateTime.now());
         }
+    }
+
+    //每10分钟刷新一次
+    @Scheduled(cron = "30 10 * * * ?")
+    private void freshWXToken() {
+
+        System.out.println("刷新微信Token\n");
+        MyWeixinStub.getTheMyWeixinStub().FreshToken();
     }
 
     //将设备属性数据按时序进行序列化保存
@@ -288,66 +335,6 @@ public class MyEPWaterRecordTask {
 
         }
 
-
-
-        /*List<MyWMeter> lstWMeter =   iMyWMeterService.getAllMeterList();
-        lstWMeter.forEach(meter->{
-
-            //在Redis中获取水表当前的读数
-            MyWMeterRecord meterRecord = new MyWMeterRecord();
-            meterRecord.setMeter_id(meter.getMeter_id());
-            meterRecord.setRoom_id(meter.getRoom_id());
-            meterRecord.setWater_cur(0);
-            meterRecord.setWater_last(0);
-            meterRecord.setWater_used(0);
-            meterRecord.setFresh_time(new Timestamp(System.currentTimeMillis()));
-
-            String sKey = "WaterMeter"+String.format("%06d",meter.getMeter_id());
-            if (redisTemplate.hasKey(sKey))
-            {
-                try
-                {
-                    float fWater_Used = 0.0f;
-                    String str_water_cur= (String)redisTemplate.opsForHash().get(sKey,"Total");
-                    float f_water_cur = Float.valueOf(str_water_cur)/100.0f;
-
-                    //数据刷新的Tick
-                    String sFreshTick = (String)redisTemplate.opsForHash().get(sKey,"Tick");
-                    Timestamp tmFresh = Timestamp.valueOf(sFreshTick);
-                    long nFreshTick = tmFresh.getTime()/1000;
-
-                    //判断采样时间是否为一天之内
-                    long lNowTick = System.currentTimeMillis()/1000;
-                    long nDelt = lNowTick > nFreshTick?lNowTick-nFreshTick:nFreshTick-lNowTick;
-
-                    //24小时的采集数据才保存
-                    if (nDelt > 3600*24)
-                    {
-
-                        //  return;     //在foreach中return跟普通的continue是一样
-                    }
-
-                    //一天之内采集的值缓存
-                    float f_water_last = meter.getWater_last();
-                    fWater_Used = f_water_cur > f_water_last ?f_water_cur-f_water_last:0.0f;
-
-                    //刷新当前的电度数据和
-                    meterRecord.setWater_cur(f_water_cur);
-                    meterRecord.setWater_last(meter.getWater_last());
-                    meterRecord.setWater_used(fWater_Used);
-
-
-                    //保存读数同时刷新上期读数
-                    iMyWMeterService.recordWater(meter,meterRecord);
-                }
-                catch (Exception ex)
-                {
-                    int llk = 0;
-                }
-            }
-
-
-        });*/
     }
 
     //自动生成水费单
@@ -385,7 +372,6 @@ public class MyEPWaterRecordTask {
             int nMonth = roomtenant.getPeriod_start_time().getMonth()+1;
             int nMaxDay = CommonFun.getDaysByYearMonth(nYear,nMonth);
             DateTime tm = new DateTime(nYear+1900,nMonth,nMaxDay,23,59,59);
-            //Timestamp timeEnd =  new Timestamp(nYear,nMonth,nMaxDay,23,59,59,999);
             Timestamp timeEnd = new Timestamp(tm.getMillis());
 
 

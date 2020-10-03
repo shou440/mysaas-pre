@@ -28,4 +28,19 @@ public class MyUserMeterServiceImpl  extends ServiceImpl<MyUserMeterMapper, MyUs
         }
         return  lst.get(0);
     }
+
+    @Override
+    public Integer addNewUserMeter(MyUserMeter meteruser) {
+
+        try
+        {
+            int nRet = baseMapper.addNewUserMeter(meteruser);
+            return  nRet;
+        }
+        catch (Exception ex)
+        {
+            return 0;
+        }
+
+    }
 }

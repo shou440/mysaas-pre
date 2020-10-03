@@ -6,41 +6,33 @@ import org.weixin4j.model.base.Token;
 
 public class MyWeixin extends Weixin {
 
-    //Token对象
-    private Token m_token = null;
 
     public MyWeixin()
     {
         super();
     }
 
-    public  void SetToken(Token token)
-    {
-        this.tokenLoader.refresh(token);
-        m_token = token;
-    }
 
+
+    //强制刷新基础Token
     public Token freshToken()
     {
-        if(null == m_token || m_token.isExprexpired())
+        Token token = null;
+        try
         {
-            try
-            {
-                m_token =  super.base().token();
-                m_token.setExpires_in(6900);
-                SetToken(m_token);
+            token =  super.base().token();
+            this.tokenLoader.refresh(token);
 
-            }
-            catch (Exception ex)
-            {
-                System.out.print("获取Token异常:"+ex.getMessage());
-            }
 
         }
+        catch (Exception ex)
+        {
+            System.out.print("刷新基础Token异常:"+ex.getMessage());
+            return null;
+        }
 
-        System.out.print("获取Token:"+m_token);
-
-        return m_token;
+        System.out.print("刷新基础Token:"+token);
+        return token;
     }
 
 }

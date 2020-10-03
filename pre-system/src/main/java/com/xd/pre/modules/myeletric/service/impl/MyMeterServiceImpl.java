@@ -118,4 +118,20 @@ public class MyMeterServiceImpl extends ServiceImpl<MyMeterMapper, MyMeter> impl
 
     }
 
+    @Override
+    public Integer addNewMeter(MyMeter meter) {
+        try
+        {
+
+           int ret =  baseMapper.addNewMeter(meter);
+            return ret;
+        }
+        catch (Exception ex)
+        {
+            String s = ex.getMessage();
+        }
+
+        return 0;
+    }
+
 }

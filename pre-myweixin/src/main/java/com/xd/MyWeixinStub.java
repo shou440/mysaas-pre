@@ -7,15 +7,16 @@ import org.weixin4j.component.PayComponent;
 import org.weixin4j.model.base.Token;
 import org.weixin4j.model.message.template.TemplateData;
 import org.weixin4j.model.pay.*;
+import org.weixin4j.model.promotion.PromotionResult;
+import org.weixin4j.model.promotion.WXPromotion;
 import org.weixin4j.model.sns.SnsUser;
 import org.weixin4j.model.user.User;
 import org.weixin4j.util.PayUtil;
 import org.weixin4j.util.SignUtil;
 
 import javax.print.DocFlavor;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class MyWeixinStub {
 
@@ -46,46 +47,28 @@ public class MyWeixinStub {
     //启动微信功能
     public void StartWeixin() {
 
-        //配置微信的基本信息
-     /*   wxpaycon = new WeixinPayConfig();
-        wxpaycon.setPartnerId("1495396332");                          //微信商户号
-        wxpaycon.setPartnerKey("41f76af6ab2478dccbcdd4d743332361");   //设置商户号的Key
-        wxpaycon.setCertPath("apiclient_cert.p12");                   //设置商户证书位置
-        wxpaycon.setCertSecret("1495396332");                         //设置证书密码
-        wxpaycon.setNotifyUrl("http://www.mbcharge.com/weixinpay");   //微信支付回调地址
-
-        //配置微信的支付信息
-        wxcon = new WeixinConfig();
-        wxcon.setAppid("wx5c451c1c46ba0ff9");
-        wxcon.setSecret("41f76af6ab2478dccbcdd4d741cb5d02");
-
-        WeixinBuilder wxbuilder = WeixinBuilder.newInstance(wxcon,wxpaycon);
-        weixin = wxbuilder.build();*/
-
         //获取Token
         try {
             weixin = new MyWeixin();
-            Token token = weixin.freshToken();
-            token.setExpires_in(6900);
-            //Configuration.isDebug()
-
-          //  weixin.SetToken(token);
-
-
-           // token = weixin.getToken();
-            System.out.print("缓存后的Token:"+token);
-
         } catch (Exception ex) {
-
-            ex.printStackTrace();
             System.out.print("启动微信异常"+ex.getMessage());
 
         }
     }
+    //获取当前时间的字符串
+    public static String getTimeStr(Date day)
+    {
+        SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
+        String sDate = df.format(day);
+        return sDate;
+    }
 
     public  void FreshToken()
     {
-        weixin.freshToken();
+        //异常时重新刷新Token
+        Token token = weixin.freshToken();
+
+
     }
 
     //通过Code获取微信用户信息
@@ -93,19 +76,17 @@ public class MyWeixinStub {
 
         try {
             User user = weixin.sns().getSnsUserByCode(code);
-            System.out.print("获取用户数据正常:"+user);
             return  user;
-        } catch (Exception ex) {
-
-            //异常时重新刷新Token
-            Token token = weixin.freshToken();
-            token.setExpires_in(6900);
-
-            System.out.print("获取用户数据发生错误1:"+ex.getMessage());
+        } catch (WeixinException wxException) {
+            System.out.print("GetUserInfo异常:"+wxException.getMessage()+"\n");
             return  null;
-
+        }catch (Exception ex) {
+            System.out.print("GetUserInfo异常:"+ex.getMessage()+"\n");
+            return  null;
         }
     }
+
+
 
     //通过Code获取微信用户信息
     public User GetUserDetailByOpenid(String openid) {
@@ -125,8 +106,8 @@ public class MyWeixinStub {
             return  user;
         } catch (Exception ex) {
             System.out.print("Get User Exception:"+ex.getMessage());
-            return  null;
 
+            return  null;
         }
     }
     //获取统一下单订单信息,用于客户支付
@@ -136,16 +117,28 @@ public class MyWeixinStub {
             //统一下单对象
             UnifiedOrder unifiedorder = new UnifiedOrder();
             unifiedorder.setAppid(weixin.getAppId());
-           // unifiedorder.setBody("Tenant Fee");
             unifiedorder.setBody(message);
             unifiedorder.setMch_id(weixin.getWeixinPayConfig().getPartnerId());
             unifiedorder.setNonce_str(java.util.UUID.randomUUID().toString().substring(0, 15));
             unifiedorder.setNotify_url(weixin.getWeixinPayConfig().getNotifyUrl());
             unifiedorder.setOpenid(openid);
-           // unifiedorder.setOpenid("oRvGF1YWJSGup8qiY27js5BbOf70");
             unifiedorder.setOut_trade_no(paymentID);
             String ip = "134.175.52.44";
             unifiedorder.setSpbill_create_ip(ip);
+
+            //获取当前北京时区的起始时间和有效时间
+            Calendar calendar = Calendar.getInstance(Locale.CHINA);
+            Date timeStart = calendar.getTime();
+            String sStart = getTimeStr(timeStart);
+            calendar.add(Calendar.MINUTE, 1);
+            Date timeEnd = calendar.getTime();
+            String sEnd = getTimeStr(timeEnd);
+            unifiedorder.setTime_start(sStart);
+            unifiedorder.setTime_expire(sEnd);
+
+
+            System.out.print("支付单起始时间:"+sStart+"\n");
+            System.out.print("支付单结束时间:"+sEnd+"\n");
 
             //总费用
             String total_fee = (fFee) + "";
@@ -159,14 +152,14 @@ public class MyWeixinStub {
             //设置签名
             unifiedorder.setSign(sign);
 
-            System.out.print("下单前");
+
             System.out.print(unifiedorder.toXML());
 
             //统一预下单
             UnifiedOrderResult unifiedOrderResult = weixin.pay().payUnifiedOrder(unifiedorder);
 
-            System.out.print("下单结果");
-            System.out.print(unifiedOrderResult.toString());
+
+            System.out.print(unifiedOrderResult.getReturn_msg());
 
             WCPay wcPay= PayUtil.getBrandWCPayRequest(weixin.getAppId(),unifiedOrderResult.getPrepay_id(),partnerKey);
             return  wcPay;
@@ -256,5 +249,48 @@ public class MyWeixinStub {
 
         }
         return true;
+    }
+
+    //结算业主提成
+    public PromotionResult userPromotion(String openid, String trade_no, String message, float fFee) {
+
+        try {
+
+            String ip = "134.175.52.44";
+            int nFee = (int)(fFee*100.0f);
+            String sFee = String.format("%d",nFee);
+            WXPromotion wxPromotion = new WXPromotion();
+            wxPromotion.setMch_appid(weixin.getAppId());
+            wxPromotion.setMchid(weixin.getWeixinPayConfig().getPartnerId());
+            wxPromotion.setOut_trade_no(trade_no);
+            wxPromotion.setOpenid(openid);
+            wxPromotion.setAmount(sFee);
+            wxPromotion.setDec(message);
+            wxPromotion.setSpbill_create_ip(ip);
+            wxPromotion.setNonce_str(java.util.UUID.randomUUID().toString().substring(0, 15));
+
+            //获取商户密钥,并获取加密字符串
+            String partnerKey = weixin.getWeixinPayConfig().getPartnerKey();
+            String sign = SignUtil.getSign(wxPromotion.toMap(), partnerKey);
+            wxPromotion.setSign(sign);
+
+            PromotionResult result = weixin.promotion().payPromotion(wxPromotion,weixin.getWeixinPayConfig());
+
+            System.out.print("付款return_code\n"+result.getReturn_code());
+            System.out.print("付款return_msg\n"+result.getReturn_msg());
+            System.out.print("付款错误描述err_code_des\n"+result.getErr_code_des());
+
+
+
+            //统一预下单
+            return  result;
+
+        } catch (Exception ex) {
+
+            System.out.print("付款异常"+ex.getMessage()+"\n");
+
+            return  null;
+
+        }
     }
 }

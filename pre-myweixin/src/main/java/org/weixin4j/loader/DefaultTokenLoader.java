@@ -47,6 +47,14 @@ public class DefaultTokenLoader implements ITokenLoader {
 
     @Override
     public void refresh(Token token) {
+
+        //设置新的基础Token的到期时间
+        if (null != token)
+        {
+            token.setExpires_in(9600);
+        }
+
+
         if (null == token || StringUtils.isEmpty(token.getAccess_token())) {
             throw new IllegalStateException("fresh access_token is null or empty");
         }
@@ -56,6 +64,8 @@ public class DefaultTokenLoader implements ITokenLoader {
         if (token.isExprexpired()) {
             throw new IllegalStateException("fresh access_token is exprexpired");
         }
+
+        System.out.print("缓存基础access_token\n");
         this.token = token;
     }
 

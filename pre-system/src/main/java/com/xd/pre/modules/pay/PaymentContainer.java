@@ -2,14 +2,22 @@ package com.xd.pre.modules.pay;
 
 import com.xd.MyWeixinStub;
 import com.xd.pre.common.utils.CommonFun;
+import com.xd.pre.modules.myeletric.device.command.IMyCommand;
 import com.xd.pre.modules.myeletric.device.gather.IDeviceGather;
+import com.xd.pre.modules.myeletric.domain.MyMeter;
 import com.xd.pre.modules.myeletric.domain.MyMeterFee;
 import com.xd.pre.modules.myeletric.domain.MyWaterFee;
+import com.xd.pre.modules.myeletric.dto.MeterChargeDto;
 import com.xd.pre.modules.myeletric.dto.MyMeterFeeUptParam;
+import com.xd.pre.modules.myeletric.mydb.MyDbStub;
 import com.xd.pre.modules.myeletric.service.IMyMeterFeeService;
 import com.xd.pre.modules.myeletric.service.IWaterFeeService;
 import com.xd.pre.modules.pay.dto.PaymentUptParam;
 import com.xd.pre.modules.pay.mapper.MyPaymentMapper;
+import com.xd.pre.modules.sys.domain.SysUser;
+import com.xd.pre.modules.sys.domain.SysUserCount;
+import com.xd.pre.modules.sys.mapper.SysUserCountMapper;
+import com.xd.pre.modules.sys.service.ISysUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,7 +43,8 @@ public class PaymentContainer implements Runnable {
     @Autowired
     private IWaterFeeService myWaterFeeService;
 
-
+    @Autowired
+    private SysUserCountMapper sysUserCountMapper;
 
     //系统支付单队列缓冲
     private List<IPayment> pay_lst = new ArrayList<IPayment>();
@@ -75,12 +84,14 @@ public class PaymentContainer implements Runnable {
     //设置数据库存储对象
     public void setMapper(MyPaymentMapper payMapper,
                           IMyMeterFeeService meterFeeService,
-                          IWaterFeeService waterFeeService
+                          IWaterFeeService waterFeeService,
+                          SysUserCountMapper sysUserCountMapper1
                           )
     {
         ipaymentMapper = payMapper;
         myMeterFeeService = meterFeeService;
         myWaterFeeService = waterFeeService;
+        sysUserCountMapper = sysUserCountMapper1;
     }
 
     //启动线程，回调容器里面的每个设备
@@ -130,22 +141,36 @@ public class PaymentContainer implements Runnable {
             {
                 MyMeterFeeUptParam uptParam = new MyMeterFeeUptParam();
                 uptParam.setPayment_id(paymentInfo.getPayment_id());
+                boolean isNeedUptFee = false;
                 if (paymentInfo.getPayment_status() == IPayment.PAY_STATE_CMPLT)
                 {
                     uptParam.setFee_status(5);
-
+                    isNeedUptFee = true;
                 }
                 else if (paymentInfo.getPayment_status() == IPayment.PAY_STATE_CANCEL)
                 {
                     uptParam.setFee_status(1);
+                    isNeedUptFee = true;
                 }
 
                 PaymentUptParam payParam = new PaymentUptParam();
                 payParam.setPayment_id(paymentInfo.getPayment_id());
                 payParam.setPayment_status(paymentInfo.getPayment_status());
 
-                myMeterFeeService.unLockByPaymentResult(uptParam);
-                myWaterFeeService.unLockByPaymentResult(uptParam);
+                if(isNeedUptFee)
+                {
+                    String str = String.format("\n水电费单状态%d\n",uptParam.getFee_status());
+                    myMeterFeeService.unLockByPaymentResult(uptParam);
+                    myWaterFeeService.unLockByPaymentResult(uptParam);
+                }
+
+                ipaymentMapper.updatePaymentStatus(payParam);
+            }
+            if (paymentInfo.getPayment_reason().equals("chargefee"))
+            {
+                PaymentUptParam payParam = new PaymentUptParam();
+                payParam.setPayment_id(paymentInfo.getPayment_id());
+                payParam.setPayment_status(paymentInfo.getPayment_status());
                 ipaymentMapper.updatePaymentStatus(payParam);
             }
 
@@ -175,19 +200,22 @@ public class PaymentContainer implements Runnable {
                                     String openid,
                                     String sMessage,
                                     float fTotalFee,
-                                    int userid)
+                                    int userid,
+                                    String roomname,
+                                    String tenantname,
+                                   String  outErrMsg)
     {
         //获取当前连接的用户ID
         try {
 
             //创建支付订单
-
             String paymentid = String.format("%06d%016d",userid, CommonFun.GetTick());
+            paymentid = "2"+paymentid;
             WCPay ret = MyWeixinStub.getTheMyWeixinStub().getUnifiedOrder(openid,paymentid,sMessage,fTotalFee);
 
             if (ret == null)
             {
-
+                outErrMsg = "创建微信支付单失败!";
                 return  null;
             }
 
@@ -195,7 +223,7 @@ public class PaymentContainer implements Runnable {
             Timestamp tm = new Timestamp(System.currentTimeMillis());
             PaymentInfo payInfo = new PaymentInfo();
             payInfo.setPayment_id(paymentid);
-            payInfo.setPayment_sn(paymentid);
+            payInfo.setPromotion_id(paymentid+"99");
             payInfo.setPayment_type("weixin");
             payInfo.setPayment_count(openid);
             payInfo.setReceive_count("userid_"+String.format("%06d",userid));
@@ -203,11 +231,31 @@ public class PaymentContainer implements Runnable {
             payInfo.setPayment_fee((int)(fTotalFee*100));
             payInfo.setPayment_status(0);
             payInfo.setPayment_memo(sMessage);
+            payInfo.setRoom_name(roomname);
+            payInfo.setTenant_name(tenantname);
             payInfo.setTime_crt(tm);
             payInfo.setPayment_reason("payfee");    //设置原因为支付费单
 
+            //如果采用微信支付，则设置结算的账号
+            List<SysUserCount> lstCount = sysUserCountMapper.getUserCountByUserID(userid);
+            SysUserCount userCount = null;
+            if (null != lstCount && lstCount.size() >= 0 )
+            {
+                userCount = lstCount.get(0);
+                if (null != userCount)
+                {
+                    payInfo.setUser_count(userCount.getUser_count());
+                    payInfo.setCount_type(userCount.getCount_type());
+                }
+            }
 
-            ipaymentMapper.createNewPayment(payInfo);         //将收费单记录进数据库中
+
+            //预支付申请成功后，创建支付单的电子单据,并保存到数据库中，并添加支付单到系统缓冲
+            IPayment pay = new WXPayment(payInfo);
+            WCPay retPay = new WCPay(ret,paymentid);
+
+            //将收费单记录进数据库中
+            ipaymentMapper.createNewPayment(payInfo);
 
 
             //更新电费单的支付状态
@@ -245,13 +293,67 @@ public class PaymentContainer implements Runnable {
             }
             myWaterFeeService.batchupdatePayment(lstParam);
 
-
-            //预支付申请成功后，创建支付单的电子单据,并保存到数据库中，并添加支付单到系统缓冲
-            IPayment pay = new WXPayment(payInfo);
+            //数据保存成功后将支付单添加到系统队列种
             PaymentContainer.GetThePaymentContainer().addPayment(pay);
 
-            WCPay retPay = new WCPay(ret,paymentid);
+            return  retPay;
 
+        } catch (Exception ex) {
+
+            outErrMsg = "创建微信支付单异常!";
+
+            return null;
+        }
+    }
+
+    //创建电费充值的支付订单
+    @Transactional
+    public WCPay CreateChargePayment(String roomname,
+                                     String tenantname,
+                                     SysUserCount userCount,
+                                     MeterChargeDto meterChargeDto,
+                                     MyMeter meter)
+    {
+        //记录充值单
+        try {
+
+            //创建支付订单
+            int userid = userCount.getUser_id();
+            String sMessage = "电费充值";
+            String paymentid = String.format("%06d%016d",userid, CommonFun.GetTick());
+            paymentid = "1"+paymentid;
+            WCPay ret = MyWeixinStub.getTheMyWeixinStub().getUnifiedOrder(meterChargeDto.getTenant_openid(),paymentid,sMessage,meterChargeDto.getCharge_fee());
+
+            if (ret == null)
+            {
+                return  null;
+            }
+
+            //保存支付账单到数据库中
+            Timestamp tm = new Timestamp(System.currentTimeMillis());
+            PaymentInfo payInfo = new PaymentInfo();
+            payInfo.setPayment_id(paymentid);
+            payInfo.setPromotion_id(paymentid+"88");
+            payInfo.setPayment_type("weixin");
+            payInfo.setPayment_count(meterChargeDto.getTenant_openid());
+            payInfo.setReceive_count("userid_"+String.format("%06d",userid));
+            payInfo.setRoom_name(roomname);
+            payInfo.setTenant_name(tenantname);
+            payInfo.setUser_id(userid);
+            payInfo.setPayment_fee((int)(meterChargeDto.getCharge_fee()*100));
+            payInfo.setPayment_status(IPayment.PAY_STATE_PREPARE);
+            payInfo.setPayment_memo(sMessage);
+            payInfo.setTime_crt(tm);
+            payInfo.setPayment_reason("chargefee");    //设置原因为支付费单
+            payInfo.setUser_count(userCount.getUser_count());
+            payInfo.setCount_type(userCount.getCount_type());
+
+            MyDbStub.getInstance().SavePayment(payInfo);
+
+            //预支付申请成功后，创建支付单的电子单据,并保存到数据库中，并添加支付单到系统缓冲
+            IPayment pay = new WXChargePayment(payInfo,meterChargeDto,meter);
+            PaymentContainer.GetThePaymentContainer().addPayment(pay);
+            WCPay retPay = new WCPay(ret,paymentid);
             return  retPay;
 
         } catch (Exception ex) {

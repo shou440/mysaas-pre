@@ -3,6 +3,8 @@ package com.xd.pre.modules.myeletric.domain;
 import lombok.Data;
 import org.joda.time.DateTime;
 
+import java.sql.Timestamp;
+
 //电表
 @Data
 public class MyMeter {
@@ -21,6 +23,6 @@ public class MyMeter {
     private float    ep_base;
     private float    ep_last;
     private float    ep_price;
-    private DateTime meter_crt_date;
-    private DateTime meter_upt_date;
+    private Timestamp meter_crt_date;
+    private Timestamp meter_upt_date;
 }

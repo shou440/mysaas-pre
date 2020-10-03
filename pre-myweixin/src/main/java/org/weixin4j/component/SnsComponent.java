@@ -145,11 +145,12 @@ public class SnsComponent extends AbstractComponent {
         }
         Object errcode = jsonObj.get("errcode");
         if (errcode != null) {
+
             //返回异常信息
             throw new WeixinException(getCause(jsonObj.getIntValue("errcode")));
         }
 
-        System.out.println("获取Token:"+jsonObj);
+
 
         return new SnsAccessToken(jsonObj);
     }
@@ -322,9 +323,12 @@ public class SnsComponent extends AbstractComponent {
         if (StringUtils.isEmpty(lang)) {
             throw new IllegalArgumentException("lang can't be null or empty");
         }
+
+
+
         SnsAccessToken snsAccessToken = getSnsOAuth2AccessToken(code);
+
+
         return weixin.user().info(snsAccessToken.getOpenid());
-       // return  null;
-      //  return getSnsUser(snsAccessToken.getAccess_token(), snsAccessToken.getOpenid(), lang);
     }
 }

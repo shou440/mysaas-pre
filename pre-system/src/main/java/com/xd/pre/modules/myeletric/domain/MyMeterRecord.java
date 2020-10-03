@@ -14,7 +14,7 @@ public class MyMeterRecord {
     private Integer  room_id;
     private Integer  meter_id;
     private float    ep_cur;
-
+    private float    ep_left;
     private Timestamp fresh_time;
 
 }
